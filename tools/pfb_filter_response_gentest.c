@@ -29,13 +29,14 @@
 
 int main(int argc, char *argv[]) {
     
-    signed char cDataReX[DEF_NUM_SAMPS] = {};
-    signed char cDataImX[DEF_NUM_SAMPS] = {};
-    signed char cDataReY[DEF_NUM_SAMPS] = {};
-    signed char cDataImY[DEF_NUM_SAMPS] = {};
+    signed char cDataReX = 0;
+    signed char cDataImX = 0;
+    signed char cDataReY = 0;
+    signed char cDataImY = 0;
     
     int i = 0;
     int j = 0;
+    int k = 0;
     
     int iSampleLength = DEF_NUM_SAMPS;
     int iFile = 0;
@@ -71,22 +72,23 @@ int main(int argc, char *argv[]) {
         afFreqY[i-1] = afFreqX[i-1];
     }
     
-    for(i = 0; i < 256; i++) {
-        for(j = 0; j < 256; j++) {
-        cDataReX[j] = SCALE_FACTOR*(0.1*cos(2*M_PI *afFreqX[i] * j /F_S));
-        cDataImX[j] = SCALE_FACTOR*(0.1*sin(2*M_PI *afFreqX[i] * j /F_S));
+    signed char toWrite[256*4] = {};
+    for(i=0; i < 256; i++) {
+        for(j=0; j<256; j++) {
+            cDataReX = SCALE_FACTOR*(0.1*cos(2*M_PI *afFreqX[i] * j /F_S));
+            cDataImX = SCALE_FACTOR*(0.1*sin(2*M_PI *afFreqX[i] * j /F_S));
+        
+            cDataReY = SCALE_FACTOR*(0.1*cos(2*M_PI *afFreqY[i] * j /F_S));
+            cDataImY = SCALE_FACTOR*(0.1*sin(2*M_PI *afFreqY[i] * j /F_S));
+            
+            toWrite[4*j]   = cDataReX;
+            toWrite[4*j+1] = cDataImX;
+            toWrite[4*j+2] = cDataReY;
+            toWrite[4*j+3] = cDataImY;
+        
         }
-        (void) write(iFile, &cDataReX, 256*sizeof(signed char));
-        (void) write(iFile, &cDataImX, 256*sizeof(signed char));
-    }
-    
-    for(i = 0; i < 256; i++) {
-        for(j = 0; j < 256; j++) {
-            cDataReY[j] = SCALE_FACTOR*(0.1*cos(2*M_PI *afFreqY[i] * j /F_S));
-            cDataImY[j] = SCALE_FACTOR*(0.1*sin(2*M_PI *afFreqY[i] * j /F_S));
-        }
-        (void) write(iFile, &cDataReY, 256*sizeof(signed char));
-        (void) write(iFile, &cDataImY, 256*sizeof(signed char));
+        (void) write(iFile, toWrite, 256*4*sizeof(signed char));
+
     }
     
     (void) close(iFile);
