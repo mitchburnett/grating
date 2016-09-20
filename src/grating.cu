@@ -32,7 +32,7 @@ cufftHandle g_stPlan = {0};
 float4* g_pf4SumStokes = NULL;
 float4* g_pf4SumStokes_d = NULL;
 int g_iIsPFBOn = DEF_PFB_ON;
-int g_iNTaps = 1;                       /* 1 if no PFB, NUM_TAPS if PFB */
+int g_iNTaps = NUM_TAPS;                       /* 1 if no PFB, NUM_TAPS if PFB */
 char g_acFileData[256] = {0};
 /* BUG: crash if file size is less than 32MB */
 int g_iSizeRead = DEF_SIZE_READ;
@@ -575,6 +575,8 @@ int Init(int iCUDADevice)
     {
         /* set number of taps to NUM_TAPS if PFB is on, else number of
            taps = 1 */
+
+	fprintf(stdout, "setting number of taps on PFB\n");
         g_iNTaps = NUM_TAPS;
 
         g_pfPFBCoeff = (float *) malloc(g_iNumSubBands
@@ -590,6 +592,7 @@ int Init(int iCUDADevice)
         }
 
         /* allocate memory for the filter coefficient array on the device */
+	fprintf(stdout, "Allocate memory for filter on device");
         CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pfPFBCoeff_d,
                                            g_iNumSubBands
                                            * g_iNTaps
@@ -598,6 +601,7 @@ int Init(int iCUDADevice)
 
         /* read filter coefficients */
         /* build file name */
+	fprintf(stdout, "Reading coeff file...\n");
         (void) sprintf(g_acFileCoeff,
                        "%s_%s_%d_%d_%d%s",
                        FILE_COEFF_PREFIX,
@@ -630,6 +634,7 @@ int Init(int iCUDADevice)
         (void) close(g_iFileCoeff);
 
         /* copy filter coefficients to the device */
+	fprintf(stdout, "Copy coeff to device...\n");
         CUDASafeCallWithCleanUp(cudaMemcpy(g_pfPFBCoeff_d,
                    g_pfPFBCoeff,
                    g_iNumSubBands * g_iNTaps * g_iNFFT * sizeof(float),
@@ -638,6 +643,7 @@ int Init(int iCUDADevice)
 
     /* allocate memory for data array - 32MB is the block size for the VEGAS
        input buffer */
+    fprintf(stdout, "allocate memory for data array\n");
     CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc4Data_d, g_iSizeRead));
     g_pc4DataRead_d = g_pc4Data_d;
 
@@ -650,6 +656,7 @@ int Init(int iCUDADevice)
     }
 
     /* calculate kernel parameters */
+    fprintf(stdout, "Calculating kernel parameters\n");
     if (g_iNFFT < g_iMaxThreadsPerBlock)
     {
         g_dimBPFB.x = g_iNFFT;
@@ -665,7 +672,8 @@ int Init(int iCUDADevice)
     g_dimGPFB.x = (g_iNumSubBands * g_iNFFT) / g_dimBPFB.x;
     g_dimGCopy.x = (g_iNumSubBands * g_iNFFT) / g_dimBCopy.x;
     g_dimGAccum.x = (g_iNumSubBands * g_iNFFT) / g_dimBAccum.x;
-
+	
+    fprintf(stdout, "Making call to ReadData...\n");
     iRet = ReadData();
     if (iRet != EXIT_SUCCESS)
     {

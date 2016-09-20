@@ -8,13 +8,13 @@
 # this may need to be changed to g77 in some cases
 CC = gcc
 # include path for other libraries
-CFLAGS_INC_PGPLOT =# define if needed (as -I[...])
+CFLAGS_INC_PGPLOT = -I /usr/local/pgplot/# define if needed (as -I[...])
 CFLAGS_INC_CUFFT =# define if needed (as -I[...])
 CFLAGS = -O3 -std=gnu99 -pedantic -Wall $(CFLAGS_INC_PGPLOT) $(CFLAGS_INC_FFTW3)
 
 # NVCC compiler and flags
 NVCC = nvcc
-NVFLAGS = --ptxas-options=-v --compiler-bindir=/usr/bin/gcc -O3
+NVFLAGS = --ptxas-options=-v --compiler-bindir=/usr/bin/gcc -O3 $(CFLAGS_INC_PGPLOT)
 
 # NVCC targets
 # (Tesla K40m CC: 3.5, GeForce GTX TITAN CC: 3.5, GeForce GTX TITAN X CC: 5.2)
@@ -23,7 +23,7 @@ NVFLAGS = --ptxas-options=-v --compiler-bindir=/usr/bin/gcc -O3
   -gencode=arch=compute_35,code=compute_35
 
 # linker flags
-LFLAGS_PGPLOT_DIR =# define if not in $PATH (as -L[...])
+LFLAGS_PGPLOT_DIR = -L /usr/local/pgplot/# define if not in $PATH (as -L[...])
 LFLAGS_CUFFT_DIR =# define if not in $PATH (as -L[...])
 LFLAGS_CUFFT = $(LFLAGS_CUFFT_DIR) -lcufft
 # in some cases, linking needs to be done with the X11 library, in which case

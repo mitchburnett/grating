@@ -18,9 +18,9 @@
  * @defgroup Macros to enable/disable options such as plotting.
  */
 #define DEBUG               1
-#define PLOT                0
+#define PLOT                0 
 #define BENCHMARKING        0
-#define OUTFILE             0
+#define OUTFILE             1
 #define DEF_CUDA_DEVICE     0    /* change to switch to another card */
 
 #include <string.h>     /* for memset(), strncpy(), memcpy(), strerror() */
@@ -44,10 +44,11 @@
 
 #define DEF_PFB_ON          FALSE
 
-#define NUM_BYTES_PER_SAMP  4
-#define DEF_LEN_SPEC        1024        /* default value for g_iNFFT */
 
-#define DEF_SIZE_READ       33554432    /* 32 MB - block size in VEGAS input
+#define NUM_BYTES_PER_SAMP  4
+#define DEF_LEN_SPEC        32        /* default value for g_iNFFT */
+
+#define DEF_SIZE_READ       262144/* 33554432     32 MB - block size in VEGAS input
                                            buffer */
 #define LEN_DATA            (NUM_BYTES_PER_SAMP * g_iNFFT)
 

@@ -12,6 +12,7 @@ import getopt
 import math
 import numpy
 import matplotlib.pyplot as plotter
+import scipy.signal as sp
 
 # function definitions
 def PrintUsage(ProgName):
@@ -77,7 +78,8 @@ M = NTaps * NFFT
 
 # the filter-coefficient-generation section -->
 X = numpy.array([(float(i) / NFFT) - (float(NTaps) / 2) for i in range(M)])
-PFBCoeff = numpy.sinc(X) * numpy.hanning(M)
+PFBCoeff = sp.chebwin(M, at=30)
+#PFBCoeff = numpy.sinc(X) * numpy.hanning(M)
 # <-- the filter-coefficient-generation section
 
 # create conversion map
