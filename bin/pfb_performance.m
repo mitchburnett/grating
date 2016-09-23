@@ -3,17 +3,18 @@ clearvars;
 
 % Open and read spec data
 % pfb off.
-f = fopen('fft_spec.dat', 'r');
+f = fopen('spec_fft.dat', 'r');
 fft_data = fread(f, 'float');
 fclose(f);
 
 % Open and read spec data -p
 % pfb on
-f = fopen('pfb_spec.dat', 'r');
+f = fopen('spec_pfb.dat', 'r');
 pfb_data = fread(f, 'float');
 fclose(f);
 
-f = fopen('spec.dat', 'r');
+%open and read pfb spec data using dolph-cheb coeff
+f = fopen('spec_cheb.dat', 'r');
 cheb_data = fread(f, 'float');
 fclose(f);
 
@@ -47,7 +48,13 @@ for i=1:8:nfft
     plot(linspace(0,fs/2,length(XX_fft)), 10*log10(XX_fft(:,i)), '-r');
 end
 
+%configure axis
+grid on;
 xlim([0, fs/2]); ylim([0, 80]);
+xtick = linspace(0, fs/2, nfft+1);
+set(gca, 'XTick', xtick(1:8:end), 'FontSize', 12);
+title('PFB Response', 'FontSize', 20);
+xlabel('Frequency (MHz)', 'FontSize', 16);
 legend('PFB', 'FFT');
 
 % show accumulated power over all freq.
