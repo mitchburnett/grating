@@ -54,7 +54,7 @@ int pfb(unsigned char* inputData_h,
 	int iSpecCount = 0;
 	int NumAcc = DEF_ACC;
 	*/
-	g_iIsPFBOn = isPFB;
+	//g_iIsPFBOn = isPFB;
 	g_iNFFT = nfft;
 	g_iNumSubBands = numSubBands;
 	int iCUDADevice = cudaDevice;
