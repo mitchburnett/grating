@@ -32,7 +32,7 @@
 #define FFTPLAN_OSTRIDE			(2*g_iNumSubBands)
 #define FFTPLAN_IDIST			1
 #define FFTPLAN_ODIST			1
-#define FFPLAN_BATCH			(2 * g_iNumSubBands)
+#define FFTPLAN_BATCH			(2 * g_iNumSubBands)
 
 // coeff file configuration
 #define FILE_COEFF_PREFIX		"coeff"
@@ -54,7 +54,7 @@ int doFFT();
 
 void cleanUp(void);
 
-#define CUDASafeCallWithCleanup(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
+#define CUDASafeCallWithCleanUp(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
 
 void __CUDASafeCallWithCleanUp(cudaError_t iRet, const char* pcFile, const int iLine, void (*pcleanUp)(void));
 
