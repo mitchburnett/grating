@@ -21,8 +21,10 @@
 
 #define DEF_CUDA_DEVICE			0
 
+#define DEF_SIZE_READ			262144	// data block size. should this be set dynamically once I get the data?
 #define DEF_LEN_SPEC			32
 #define NUM_TAPS				8
+#define DEF_NUM_SUBBANDS		1
 
 // FFT Plan configuration
 #define FFTPLAN_RANK 			1
@@ -52,7 +54,7 @@ int doFFT();
 
 void cleanUp(void);
 
-#define CudaSafeCallWithCleanup(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
+#define CUDASafeCallWithCleanup(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
 
 void __CUDASafeCallWithCleanUp(cudaError_t iRet, const char* pcFile, const int iLine, void (*pcleanUp)(void));
 

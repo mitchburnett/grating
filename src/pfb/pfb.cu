@@ -103,7 +103,7 @@ int loadCoeff(int iCudaDevice){
 	if (iCudaDevice >= iDevCount) {
 		(void) fprintf(stderr,
 					   "ERROR: Requested device %d no found in present %d device list.\n",
-					   iCUDADevice,
+					   iCudaDevice,
 					   iDevCount);
 		return EXIT_FAILURE;
 	}
@@ -114,7 +114,7 @@ int loadCoeff(int iCudaDevice){
 				i,
 				stDevProp.name, stDevProp.major, stDevProp.minor,
 				stDevProp.multiProcessorCount * stDevProp.maxThreadsPerMultiProcessor,
-				(iCUDADevice == i) ? "selected" : "");
+				(iCudaDevice == i) ? "selected" : "");
 	}
 	CUDASafeCallWithCleanUp(cudaSetDevice(iCudaDevice));
 
