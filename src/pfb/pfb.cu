@@ -151,10 +151,10 @@ int loadCoeff(int iCudaDevice){
 	// print memory usage report.
 	(void) fprintf(stderr,
 					"INFO: Total memory requested on GPU is %g MB of %g possible MB.\n"
-					"Memory break-down:\n"
+					"\tMemory break-down:\n"
 					"\tInput data buffer:\t%g MB\n"
-					"\tFFT in array:\t%g MB"
-					"\tFFT out array:\t%g MB"
+					"\tFFT in array:\t%g MB\n"
+					"\tFFT out array:\t%g MB\n"
 					"\tPFB Coefficients: %d KB\n",
 					((float) lTotCUDAMalloc) / (1024*1024),
 					((float) stDevProp.totalGlobalMem) / (1024*1024),
@@ -166,7 +166,7 @@ int loadCoeff(int iCudaDevice){
 	/*************************/
 	/* Load PFB coefficients */
 	/*************************/
-	(void) fprintf(stdout, "Setting up PFB filter coefficients...\n");
+	(void) fprintf(stdout, "\nSetting up PFB filter coefficients...\n");
 	g_iNTaps = NUM_TAPS; // set the number of taps. Change this to where it happens earlier to be more dynamic.
 	int sizePFB = g_iNumSubBands * g_iNTaps * g_iNFFT * sizeof(float);
 
@@ -179,7 +179,7 @@ int loadCoeff(int iCudaDevice){
 	}
 
 	// Read filter coefficients from file
-	(void) fprintf(stdout, "Reading in coefficients...\n");
+	(void) fprintf(stdout, "\tReading in coefficients...\n");
 	(void) sprintf(g_acFileCoeff,
 				   "%s_%s_%d_%d_%d%s",
 				   FILE_COEFF_PREFIX,
@@ -207,7 +207,7 @@ int loadCoeff(int iCudaDevice){
 	/********************************************/
 	/* Allocate memory and setup on CUDA device */
 	/********************************************/
-	(void) fprintf(stdout, "Setting up CUDA device.\n");
+	(void) fprintf(stdout, "\nSetting up CUDA device.\n");
 
 	// allocate memory for pfb coefficients on GPU
 	(void) fprintf(stdout, "\tAllocating memory for PFB...\n");
