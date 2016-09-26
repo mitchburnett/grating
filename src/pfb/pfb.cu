@@ -31,12 +31,12 @@ dim3 g_dimBCopy(1, 1, 1);
 dim3 g_dimGCopy(1, 1);
 cufftHandle g_stPlan = {0};
 
-char4* g_pc4InBuf = NULL;
-char4* g_pc4InBufRead = NULL;
-char4* g_pc4Data_d = NULL;
-char4* g_pc4DataRead_d = NULL;
-float4* g_pf4FFTIn_d = NULL;
-float4* g_pf4FFTOut_d = NULL;
+char2* g_pc2InBuf = NULL;
+char2* g_pc2InBufRead = NULL;
+char2* g_pc2Data_d = NULL;
+char2* g_pc2DataRead_d = NULL;
+float2* g_pf2FFTIn_d = NULL;
+float2* g_pf2FFTOut_d = NULL;
 
 int g_iNFFT = DEF_LEN_SPEC;
 int g_iNTaps = NUM_TAPS;
@@ -127,8 +127,8 @@ int loadCoeff(int iCudaDevice){
 
 	// Set malloc size - lTotCUDAMalloc is used only to calculate the total amount of memory not used for the allocation.
 	lTotCUDAMalloc += g_iSizeRead; // size   data
-	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(4))); // size of FFT input array This should be different since our data is unsigned char?
-	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(4))); // size of FFT output array
+	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(2))); // size of FFT input array This should be different since our data is unsigned char?
+	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(2))); // size of FFT output array
 	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float)); 	// size of PFB Coefficients
 	// Check CUDA device can handle the memory request
 	if(lTotCUDAMalloc > stDevProp.totalGlobalMem) {
@@ -142,8 +142,8 @@ int loadCoeff(int iCudaDevice){
 						((float) lTotCUDAMalloc) / (1024*1024),
 						((float) stDevProp.totalGlobalMem) / (1024*1024),
 						((float) g_iSizeRead) / (1024 * 1024),
-						((float) g_iNumSubBands * g_iNFFT * sizeof(float4)) / (1024 * 1024),
-						((float) g_iNumSubBands * g_iNFFT * sizeof(float4)) / (1024 * 1024)),
+						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
+						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024)),
 						((float) g_iNumSubBands * g_iNFFT * sizeof(float));
 		return EXIT_FAILURE;
 	}
@@ -159,8 +159,8 @@ int loadCoeff(int iCudaDevice){
 					((float) lTotCUDAMalloc) / (1024*1024),
 					((float) stDevProp.totalGlobalMem) / (1024*1024),
 					((float) g_iSizeRead) / (1024 * 1024),
-					((float) g_iNumSubBands * g_iNFFT * sizeof(float4)) / (1024 * 1024),
-					((float) g_iNumSubBands * g_iNFFT * sizeof(float4)) / (1024 * 1024)),
+					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
+					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024)),
 					((float) g_iNumSubBands * g_iNFFT * sizeof(float));
 
 	/*************************/
@@ -219,9 +219,9 @@ int loadCoeff(int iCudaDevice){
 
 	// allocate memory for FFT in and out arrays
 	(void) fprintf(stdout, "\tAllocate memory for FFT arrays...\n");
-	int sizeDataBlock = g_iNumSubBands * g_iNFFT * sizeof(float4);
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf4FFTIn_d, sizeDataBlock));
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf4FFTOut_d, sizeDataBlock));
+	int sizeDataBlock = g_iNumSubBands * g_iNFFT * sizeof(float2);
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf2FFTIn_d, sizeDataBlock));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf2FFTOut_d, sizeDataBlock));
 
 	// set kernel parameters
 	(void) fprintf(stdout, "\tSetting kernel parameters...\n");
@@ -280,21 +280,21 @@ void __CUDASafeCallWithCleanUp(cudaError_t iRet,
 
 void cleanUp() {
 /* free resources */
-    if (g_pc4InBuf != NULL) {
-        free(g_pc4InBuf);
-        g_pc4InBuf = NULL;
+    if (g_pc2InBuf != NULL) {
+        free(g_pc2InBuf);
+        g_pc2InBuf = NULL;
     }
-    if (g_pc4Data_d != NULL) {
-        (void) cudaFree(g_pc4Data_d);
-        g_pc4Data_d = NULL;
+    if (g_pc2Data_d != NULL) {
+        (void) cudaFree(g_pc2Data_d);
+        g_pc2Data_d = NULL;
     }
-    if (g_pf4FFTIn_d != NULL) {
-        (void) cudaFree(g_pf4FFTIn_d);
-        g_pf4FFTIn_d = NULL;
+    if (g_pf2FFTIn_d != NULL) {
+        (void) cudaFree(g_pf2FFTIn_d);
+        g_pf2FFTIn_d = NULL;
     }
-    if (g_pf4FFTOut_d != NULL) {
-        (void) cudaFree(g_pf4FFTOut_d);
-        g_pf4FFTOut_d = NULL;
+    if (g_pf2FFTOut_d != NULL) {
+        (void) cudaFree(g_pf2FFTOut_d);
+        g_pf2FFTOut_d = NULL;
     }
 
     free(g_pfPFBCoeff);
