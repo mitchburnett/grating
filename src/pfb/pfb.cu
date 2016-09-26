@@ -15,7 +15,7 @@ int g_iNumSubBands = DEF_NUM_SUBBANDS;
 
 int g_IsDataReadDone = FALSE;
 int g_IsProcDone = FALSE;
-int g_iIsPFBOn = DEF_PFB_ON;
+//int g_iIsPFBOn = DEF_PFB_ON;
 
 int g_iSizeFile = 0;
 int g_iReadCount = 0;
@@ -48,7 +48,7 @@ float *g_pfPFBCoeff_d = NULL;
 // inputs: numSubbands, nfft, isPFBOn, iCudaDevice
 int pfb(unsigned char* inputData_h,
 		unsigned char* outputData_h,
-		int, isPFB, int numSubBands, int nfft, int cudaDevice) {
+		int isPFB, int numSubBands, int nfft, int cudaDevice) {
 
 	/*int iRet = EXIT_SUCCESS;
 	int iSpecCount = 0;
@@ -71,6 +71,7 @@ int pfb(unsigned char* inputData_h,
 	float fTotThroughput = 0.0;
 
 	/* Init */
+	return 0;
 
 }
 
@@ -95,11 +96,11 @@ int loadCoeff(int iCudaDevice){
 
 	(void) cudaGetDeviceCount(&iDevCount);
 	if (0 == iDevCount) {
-		(void) fprintf(stder, "ERROR: No CUDA-capable device found!\n");
+		(void) fprintf(stderr, "ERROR: No CUDA-capable device found!\n");
 		return EXIT_FAILURE;
 	}
 	// Look for requested device (if applicable)
-	if (iCUDADevice >= iDevCount) {
+	if (iCudaDevice >= iDevCount) {
 		(void) fprintf(stderr,
 					   "ERROR: Requested device %d no found in present %d device list.\n",
 					   iCUDADevice,
@@ -126,9 +127,9 @@ int loadCoeff(int iCudaDevice){
 
 	// Set malloc size - lTotCUDAMalloc is used only to calculate the total amount of memory not used for the allocation.
 	lTotCUDAMalloc += g_iSizeRead; // size   data
-	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(4))) // size of FFT input array This should be different since our data is unsigned char?
-	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(4))) // size of FFT output array
-	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float)) 	// size of PFB Coefficients
+	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(4))); // size of FFT input array This should be different since our data is unsigned char?
+	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(4))); // size of FFT output array
+	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float)); 	// size of PFB Coefficients
 	// Check CUDA device can handle the memory request
 	if(lTotCUDAMalloc > stDevProp.totalGlobalMem) {
 		(void) fprintf(stderr,
@@ -196,7 +197,7 @@ int loadCoeff(int iCudaDevice){
 		return EXIT_FAILURE;
 	}
 
-	iRet = read(g_iFileCoeff, g_pfPFBCoeff, sizePFB)
+	iRet = read(g_iFileCoeff, g_pfPFBCoeff, sizePFB);
 	if(iRet != sizePFB) {
 		(void) fprintf(stderr, "ERROR: Failed reading filter coefficients. %s\n", strerror(errno));
 		return EXIT_FAILURE;
@@ -225,14 +226,14 @@ int loadCoeff(int iCudaDevice){
 	// set kernel parameters
 	(void) fprintf(stdout, "\tSetting kernel parameters...\n");
 	if(g_iNFFT < g_iMaxThreadsPerBlock) {
-		g_dimPFB.x   = g_iNFFT;
-		g_dimBCopy.x = g.g_iNFFT;
+		g_dimBPFB.x   = g_iNFFT;
+		g_dimBCopy.x = g_iNFFT;
 	} else {
-		g_dimPFB.x   = g_iMaxThreadsPerBlock;
+		g_dimBPFB.x   = g_iMaxThreadsPerBlock;
 		g_dimBCopy.x = g_iMaxThreadsPerBlock;
 	}
-	g_dimGPFB.x  = (g_iNumSubBands * g_iNFFT) / g_dimGPFB;
-	g_dimGCopy.x = (g_iNumSubBands * g_iNFFT) / g_dimBCopy;
+	g_dimGPFB.x  = (g_iNumSubBands * g_iNFFT) / g_dimGPFB.x;
+	g_dimGCopy.x = (g_iNumSubBands * g_iNFFT) / g_dimBCopy.x;
 
 	// create a CUFFT plan
 	(void) fprintf(stdout, "\tCreating cuFFT plan...\n");
@@ -244,18 +245,38 @@ int loadCoeff(int iCudaDevice){
 							  FFTPLAN_IDIST,
 							  &g_iNFFT,
 							  FFTPLAN_OSTRIDE,
-							  FFTPLAN_ODIST
+							  FFTPLAN_ODIST,
 							  CUFFT_C2C,
 							  FFTPLAN_BATCH);
 	if(iCUFFTRet != CUFFT_SUCCESS) {
-		(void) fprint(stderr, "ERROR: Plan creation failed!\n");
+		(void) fprintf(stderr, "ERROR: Plan creation failed!\n");
 		return EXIT_FAILURE;
 	}
 
 	fprintf(stdout, "\nDevice for PFB successful initialized!\n");
 	return EXIT_SUCCESS;
 
-}	
+}
+
+void __CUDASafeCallWithCleanUp(cudaError_t iRet,
+                               const char* pcFile,
+                               const int iLine,
+                               void (*pcleanUp)(void))
+{
+    if (iRet != cudaSuccess)
+    {
+        (void) fprintf(stderr,
+                       "ERROR: File <%s>, Line %d: %s\n",
+                       pcFile,
+                       iLine,
+                       cudaGetErrorString(iRet));
+        /* free resources */
+        (*pcleanUp)();
+        exit(EXIT_FAILURE);
+    }
+
+    return;
+}
 
 void cleanUp() {
 /* free resources */
