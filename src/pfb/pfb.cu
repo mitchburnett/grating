@@ -151,7 +151,7 @@ int loadCoeff(int iCudaDevice){
 	// print memory usage report.
 	(void) fprintf(stderr,
 					"INFO: Total memory requested on GPU is %g MB of %g possible MB.\n"
-					"\t*** Memory breakdown ****:\n"
+					"\t**** Memory breakdown ****\n"
 					"\tInput data buffer:\t%g MB\n"
 					"\tFFT in array:\t%g MB\n"
 					"\tFFT out array:\t%g MB\n"
