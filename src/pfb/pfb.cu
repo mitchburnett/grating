@@ -253,7 +253,7 @@ int loadCoeff(int iCudaDevice){
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stdout, "\nDevice for PFB successful initialized!\n");
+	fprintf(stdout, "\nDevice for PFB successfully initialized!\n");
 	return EXIT_SUCCESS;
 
 }
