@@ -110,11 +110,11 @@ int loadCoeff(int iCudaDevice){
 	// Query devices and setup selected device.
 	for(i = 0; i < iDevCount; i++) {
 		CUDASafeCallWithCleanUp(cudaGetDeviceProperties(&stDevProp, i));
-		printf("Device %d: %s, Compute Capability %d.%d, %d physical threads %s\n",
+		printf("\tDevice %d: %s, Compute Capability %d.%d, %d physical threads %s\n",
 				i,
 				stDevProp.name, stDevProp.major, stDevProp.minor,
 				stDevProp.multiProcessorCount * stDevProp.maxThreadsPerMultiProcessor,
-				(iCudaDevice == i) ? "selected" : "");
+				(iCudaDevice == i) ? "<<SELECTED>>" : "");
 	}
 	CUDASafeCallWithCleanUp(cudaSetDevice(iCudaDevice));
 
@@ -134,10 +134,10 @@ int loadCoeff(int iCudaDevice){
 	if(lTotCUDAMalloc > stDevProp.totalGlobalMem) {
 		(void) fprintf(stderr,
 						"ERROR: Total memory requested on GPU is %g MB of %g possible MB.\n"
-						"Memory break-down:\n"
+						"\tMemory break-down:\n"
 						"\tInput data buffer:\t%g MB\n"
-						"\tFFT in array:\t%g MB"
-						"\tFFT out array:\t%g MB"
+						"\tFFT in array:\t%g MB\n"
+						"\tFFT out array:\t%g MB\n"
 						"\tPFB Coefficients: %d KB\n",
 						((float) lTotCUDAMalloc) / (1024*1024),
 						((float) stDevProp.totalGlobalMem) / (1024*1024),
