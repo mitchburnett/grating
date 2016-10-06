@@ -2,6 +2,12 @@
 
 int main() {
 
+
+	// setup data arrrays
+
+	// load data into memory
+
+	// init cuda device
 	int iCudaDevice = DEF_CUDA_DEVICE;
 	int iRet = loadCoeff(iCudaDevice);
 	if(iRet != EXIT_SUCCESS) {
@@ -9,6 +15,12 @@ int main() {
 		cleanUp();
 		return EXIT_FAILURE;
 	}
+
+	// start pfb function
+
+	// process return from pfb
+
+
 
 	return EXIT_SUCCESS;
 }

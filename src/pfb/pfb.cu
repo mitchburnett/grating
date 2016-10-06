@@ -46,18 +46,17 @@ float *g_pfPFBCoeff_d = NULL;
 
 // The main will potentially be a different function if this is part of a library?
 // inputs: numSubbands, nfft, isPFBOn, iCudaDevice
-int pfb(unsigned char* inputData_h,
-		unsigned char* outputData_h,
-		int isPFB, int numSubBands, int nfft, int cudaDevice) {
+int runPFB(unsigned char* inputData_h,
+		   unsigned char* outputData_h) {
 
 	/*int iRet = EXIT_SUCCESS;
 	int iSpecCount = 0;
 	int NumAcc = DEF_ACC;
 	*/
 	//g_iIsPFBOn = isPFB;
-	g_iNFFT = nfft;
-	g_iNumSubBands = numSubBands;
-	int iCUDADevice = cudaDevice;
+	//g_iNFFT = nfft;
+	//g_iNumSubBands = numSubBands;
+	//int iCUDADevice = cudaDevice;
 
 	cudaError_t iCUDARet = cudaSuccess;
 
@@ -69,6 +68,17 @@ int pfb(unsigned char* inputData_h,
 	struct timeval stStop = {0};
 	float fTimeTaken = 0.0;
 	float fTotThroughput = 0.0;
+
+	// Process data
+	while(!g_IsProcDone) {
+
+		// load data onto device
+
+		
+
+
+
+	}
 
 	/* Init */
 	return 0;

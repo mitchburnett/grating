@@ -43,7 +43,7 @@ typedef unsigned char BYTE;
 
 // methods
 int loadCoeff(int iCudaDevice);
-int pfb();
+int runPFB();
 int loadDataToMem(void);
 int ReadData(void);
 
