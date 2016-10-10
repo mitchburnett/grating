@@ -22,14 +22,16 @@
 #define DEF_CUDA_DEVICE			0
 
 #define DEF_SIZE_READ			262144	// data block size. should this be set dynamically once I get the data?
-#define DEF_LEN_SPEC			32
-#define NUM_TAPS				8
-#define DEF_NUM_SUBBANDS		1
+#define DEF_LEN_SPEC			32	// FFT Size in PFB
+#define NUM_TAPS				8	// PFB Decimation factor
+#define DEF_NUM_CHANNELS		25  // System spec for total number of channels
+#define PFB_CHANNELS			5	// Number of coarse channels through PFB
+#define DEF_NUM_ELEMENTS		64  // System spec for number of elements
 
 // FFT Plan configuration
 #define FFTPLAN_RANK 			1
-#define FFTPLAN_ISTRIDE			(2*g_iNumSubBands)
-#define FFTPLAN_OSTRIDE			(2*g_iNumSubBands)
+#define FFTPLAN_ISTRIDE			(2 * g_iNumSubBands)
+#define FFTPLAN_OSTRIDE			(2 * g_iNumSubBands)
 #define FFTPLAN_IDIST			1
 #define FFTPLAN_ODIST			1
 #define FFTPLAN_BATCH			(2 * g_iNumSubBands)
