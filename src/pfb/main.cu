@@ -1,8 +1,8 @@
 #include "pfb.h"
 
-int main() {
+int main(int argc, char *argv[]) {
 
-
+	
 	// setup data arrrays
 
 	// load data into memory

@@ -33,55 +33,76 @@ cufftHandle g_stPlan = {0};
 
 char2* g_pc2InBuf = NULL;
 char2* g_pc2InBufRead = NULL;
+
 char2* g_pc2Data_d = NULL;
 char2* g_pc2DataRead_d = NULL;
+
 float2* g_pf2FFTIn_d = NULL;
 float2* g_pf2FFTOut_d = NULL;
 
 int g_iNFFT = DEF_LEN_SPEC;
 int g_iNTaps = NUM_TAPS;
-int g_iNumSubBands = DEF_NUM_SUBBANDS;
+int g_iNumSubBands = DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS;
+
 float *g_pfPFBCoeff = NULL;
 float *g_pfPFBCoeff_d = NULL;
 
 // The main will potentially be a different function if this is part of a library?
-// inputs: numSubbands, nfft, isPFBOn, iCudaDevice
-int runPFB(unsigned char* inputData_h,
-		   unsigned char* outputData_h) {
+int runPFB(signed char* inputData_h,
+		   signed char* outputData_h
+		   unsigned char channelSelect) {
 
-	/*int iRet = EXIT_SUCCESS;
-	int iSpecCount = 0;
-	int NumAcc = DEF_ACC;
-	*/
-	//g_iIsPFBOn = isPFB;
-	//g_iNFFT = nfft;
-	//g_iNumSubBands = numSubBands;
-	//int iCUDADevice = cudaDevice;
-
+	// PFB process variables
 	cudaError_t iCUDARet = cudaSuccess;
-
 	int iProcData = 0;
 	long int lProcDataAll = 0;
 
-	// Time vars without deep benchmarking
-	struct timeval stStart = {0};
-	struct timeval stStop = {0};
-	float fTimeTaken = 0.0;
-	float fTotThroughput = 0.0;
+	// consts
+	const int mcntMax = 20;
+	const int timeSamplesMax = 20;
+
+	int minChannel = channelSelect * PFB_CHANNELS;
+	int maxChannel = minChannel + (PFB_CHANNELS - 1);
+
+	// extract channel data from full data stream.
+	int dataSize = mcntMax * timeSamplesMax * PFB_CHANNELS * DEF_NUM_ELEMENTS * 2*sizeof(char);
+	signed char* buffer[dataSize] = {};
+
+	int m = 0; // m count iter
+	int t = 0; // time samples
+	int f = 0; // freq channel
+	int e = 0; // element
+	ptr = 0;   // buffer 
+	for(m; m < mcntMax; m++) {
+		for(t; t < timeSamplesMax; t++) {
+			for(f = minChannel; f <= maxChannel; f++){
+				for(e; e < DEF_NUM_ELEMENTS - 1; e++) {
+					ch_idx = f * DEF_NUM_ELEMENTS;
+					t_idx = t * DEF_NUM_ELEMENTS * DEF_NUM_CHANNELS;
+					m_idx = m * timeSamplesMax * DEF_NUM_ELEMENTS * DEF_NUM_CHANNELS;
+
+					buffer[ptr] = inputData_h[e + ch_idx + t_idx + m_idx];
+					ptr++;
+				}
+			}
+		}	
+	}
 
 	// Process data
 	while(!g_IsProcDone) {
 
 		// load data onto device
 
-		
-
-
 
 	}
 
 	/* Init */
 	return 0;
+
+}
+
+int loadData() {
+
 
 }
 
@@ -242,7 +263,7 @@ int loadCoeff(int iCudaDevice){
 		g_dimBPFB.x   = g_iMaxThreadsPerBlock;
 		g_dimBCopy.x = g_iMaxThreadsPerBlock;
 	}
-	g_dimGPFB.x  = (g_iNumSubBands * g_iNFFT) / g_dimGPFB.x;
+	g_dimGPFB.x  = (g_iNumSubBands * g_iNFFT) / g_dimBPFB.x;
 	g_dimGCopy.x = (g_iNumSubBands * g_iNFFT) / g_dimBCopy.x;
 
 	// create a CUFFT plan
@@ -286,6 +307,15 @@ void __CUDASafeCallWithCleanUp(cudaError_t iRet,
     }
 
     return;
+}
+
+__global__ void map(char2 *pc2DataIn,
+					char2 *pc2DataOut,
+					unsigned char channelSelect) {
+	int threadsPerBlock = blockDim.x * blockDim.y;
+	int absIdx = threadsPerBlock * (blockIdx.x * gridDim.y + blockIdx.y * blockDim.x) + threadIdx.y;
+
+	if absIdx
 }
 
 void cleanUp() {

@@ -45,8 +45,7 @@ int main(int argc, char *argv[]) {
 	int channelBandgap = 5;		// MHz jumps
 	float freq[CHANNELS] = {};
 	for(i = 1; i <= CHANNELS; i++) {
-		freq[i] = channelBandgap * i;
-		fprintf(stdout, "Freq Channel: %f\n", freq[i]);
+		freq[i-1] = channelBandgap * i;
 	}
 
 	int n = 0;
@@ -65,7 +64,7 @@ int main(int argc, char *argv[]) {
 			cDataImY = SCALE_FACTOR * (0.1 * sin(2*M_PI * freq[f] * n / F_S));
 			for(e = 0; e < 2*NUM_EL; e++) {
 				
-				int idx = e + f * NUM_EL;
+				int idx = e + f * (2 * NUM_EL);
 				if( !(e%2) ) {
 				//create interleaved samples for real and Im 
 				toWrite[idx] = cDataReX;
