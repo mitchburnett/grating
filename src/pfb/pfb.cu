@@ -289,6 +289,15 @@ int loadCoeff(int iCudaDevice){
 
 }
 
+__global__ void map(char2 *pc2DataIn,
+					char2 *pc2DataOut,
+					unsigned char channelSelect) {
+	int threadsPerBlock = blockDim.x * blockDim.y;
+	int absIdx = threadsPerBlock * (blockIdx.x * gridDim.y + blockIdx.y * blockDim.x) + threadIdx.y;
+
+	if absIdx
+}
+
 void __CUDASafeCallWithCleanUp(cudaError_t iRet,
                                const char* pcFile,
                                const int iLine,
@@ -307,15 +316,6 @@ void __CUDASafeCallWithCleanUp(cudaError_t iRet,
     }
 
     return;
-}
-
-__global__ void map(char2 *pc2DataIn,
-					char2 *pc2DataOut,
-					unsigned char channelSelect) {
-	int threadsPerBlock = blockDim.x * blockDim.y;
-	int absIdx = threadsPerBlock * (blockIdx.x * gridDim.y + blockIdx.y * blockDim.x) + threadIdx.y;
-
-	if absIdx
 }
 
 void cleanUp() {

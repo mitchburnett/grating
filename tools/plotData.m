@@ -44,10 +44,10 @@ faxis = fs*(0:N/2)/N;
 plot(faxis,P1);
 
 %%
-channels = 5;
-len = channels*numEl*2;
+PFB_CHANNELS = 5;
+len = PFB_CHANNELS*numEl*2;
 
-outputChannels = zeros(channels, N);
+outputChannels = zeros(PFB_CHANNELS, N);
 for i = 1:N
     timeSlice = output((i-1)*len+1:i*len);
     s_real = timeSlice(1:2:end);

@@ -27,17 +27,21 @@
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
 
 
-char2* g_inputData = NULL;
-char2* g_outputData = NULL;
-char2* g_inputData_d = NULL;
-char2* g_outputData_d = NULL;
+char* g_inputData = NULL;
+char* g_outputData = NULL;
+char* g_inputData_d = NULL;
+char* g_outputData_d = NULL;
 
 int loadData(char* f){
 	int ret = EXIT_SUCCESS;
 	int file =  0;
 
 	int readSize = NUM_EL * CHANNELS * SAMPLES * (2*sizeof(char));
-	g_inputData = (char2*) malloc(readSize);
+	g_inputData = (char*) malloc(readSize);
+	if(NULL == g_inputData) {
+		(void) fprintf(stderr, "ERROR: Memory allocation failed! %s.\n", strerror(errno));
+		return EXIT_FAILURE;
+	}
 
 	file = open(f, O_RDONLY);
 	if (file < EXIT_SUCCESS) {
@@ -69,9 +73,9 @@ void __checkCudaErrors(cudaError_t err, const char* file, const int line) {
 	return;
 }
 
-__global__ void map(char2 *dataIn,
-			   char2 *dataOut,
-			   int channelSelect) {
+__global__ void map(char *dataIn,
+			   		char *dataOut,
+			   		int channelSelect) {
 
 	// select the channel range
 	int channelMin = PFB_CHANNELS*channelSelect;
@@ -90,6 +94,7 @@ __global__ void map(char2 *dataIn,
 	dataOut[mapIdx] = dataIn[absIdx];
 	return;
 
+
 }
 
 int init(){
@@ -98,7 +103,7 @@ int init(){
 	checkCudaErrors(cudaSetDevice(cudaDevice));
 
 	int inputSize = NUM_EL * CHANNELS * SAMPLES * (2*sizeof(char));
-	int outputSize = inputSize / 5;
+	int outputSize = inputSize/5;
 
 	// allocate memory for input and output data on the device.
 	checkCudaErrors(cudaMalloc((void **) &g_inputData_d, inputSize));
@@ -124,7 +129,7 @@ int main(int argc, char *argv[]) {
 	filename[255] = '\0';
 
 	ret = loadData(filename);
-	if (ret < EXIT_SUCCESS) {
+	if (ret == EXIT_FAILURE) {
 		return EXIT_FAILURE;
 	}
 
@@ -136,9 +141,24 @@ int main(int argc, char *argv[]) {
 	dim3 blockSize(1, 2*NUM_EL, 1);
 	map<<<gridSize, blockSize>>>(g_inputData_d, g_outputData_d, select);
 
-	int outputSize = NUM_EL * PFB_CHANNELS * SAMPLES * (2*sizeof(char));
-	g_outputData = (char2*) malloc(outputSize);
+	int outputSize = SAMPLES * PFB_CHANNELS * NUM_EL * (2*sizeof(char));
+	g_outputData = (char*) malloc(outputSize);
 	checkCudaErrors(cudaMemcpy(g_outputData, g_outputData_d, outputSize, cudaMemcpyDeviceToHost));
+
+	//output the true data as a check.
+	/*
+	int file = 0;
+	char outfileFull[256] = "outfileFull.dat\0";
+	file = open(outfile,
+					O_CREAT | O_TRUNC | O_WRONLY,
+					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(file < EXIT_SUCCESS) {
+		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
+		return EXIT_FAILURE;
+	}
+
+	(void) write(file, g_inputData, SAMPLES*CHANNELS*NUM_EL*2*sizeof(char));
+	(void) close(file); */
 
 	
 	// output the mapped data.

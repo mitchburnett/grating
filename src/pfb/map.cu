@@ -14,7 +14,7 @@ __global__ map(char2 *dataIn,
 		return;
 	}
 	// determine absolute index in dataIn
-	int threadsPerBlock = blocDim.x*blocDim.y;
+	int threadsPerBlock = blockDim.x*blockDim.y;
 	int absIdx = threadsPerBlock*(blockIdx.x*gridDim.y + blockIdx.y*blockDim.x) + threadIdx.y;
 	int mapIdx = threadsPerBlock*(blockIdx.x*gridDim.y/PFB_CHANNELS + blockIdx.y*blockDim.x) + threadIdx.y;
 
