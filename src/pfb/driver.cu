@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 	dim3 gridSize(SAMPLES,CHANNELS,1);
 	dim3 blockSize(1, 2*NUM_EL, 1);
 	map<<<gridSize, blockSize>>>(g_inputData_d, g_outputData_d, select);
-	cudaGetLastError();
+	checkCudaErrors(cudaGetLastError());	
 
 
 
