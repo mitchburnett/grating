@@ -1,5 +1,6 @@
 %%
 clearvars;
+close all;
 
 f = fopen('../src/pfb/data.dat', 'r');
 d = fread(f, 'schar');

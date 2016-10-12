@@ -68,9 +68,29 @@ void __checkCudaErrors(cudaError_t err, const char* file, const int line) {
 						line,
 						cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
-	}
+	}  
 
 	return;
+}
+
+int init(){
+
+	int cudaDevice = DEF_CUDA_DEVICE;
+	checkCudaErrors(cudaSetDevice(cudaDevice));
+
+	int inputSize  = NUM_EL * CHANNELS * SAMPLES * (2*sizeof(char));
+	int outputSize = SAMPLES * PFB_CHANNELS * NUM_EL * (2*sizeof(char));
+
+	// allocate memory for input and output data on the device.
+	checkCudaErrors(cudaMalloc((void **) &g_inputData_d, inputSize));
+	checkCudaErrors(cudaMemset((void *) g_inputData_d, 0, inputSize));
+	checkCudaErrors(cudaMalloc((void **) &g_outputData_d, outputSize));
+	checkCudaErrors(cudaMemset((void *) g_outputData_d, 0, outputSize));
+
+	// copy data to the device.
+	checkCudaErrors(cudaMemcpy(g_inputData_d, g_inputData, inputSize, cudaMemcpyHostToDevice));
+
+	return EXIT_SUCCESS;
 }
 
 __global__ void map(char *dataIn,
@@ -87,38 +107,18 @@ __global__ void map(char *dataIn,
 		return;
 	}
 	// determine absolute index in dataIn
-	int threadsPerBlock = blockDim.x*blockDim.y;
-	int absIdx = threadsPerBlock*(blockIdx.x*gridDim.y + blockIdx.y*blockDim.x) + threadIdx.y;
-	int mapIdx = threadsPerBlock*(blockIdx.x*gridDim.y/PFB_CHANNELS + blockIdx.y*blockDim.x) + threadIdx.y;
+	f = f % PFB_CHANNELS;
+	//int threadsPerBlock = blockDim.x*blockDim.y;
+	int absIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
+	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y/PFB_CHANNELS + f) + threadIdx.y;
 
 	dataOut[mapIdx] = dataIn[absIdx];
 	return;
-
-
-}
-
-int init(){
-
-	int cudaDevice = DEF_CUDA_DEVICE;
-	checkCudaErrors(cudaSetDevice(cudaDevice));
-
-	int inputSize = NUM_EL * CHANNELS * SAMPLES * (2*sizeof(char));
-	int outputSize = inputSize/5;
-
-	// allocate memory for input and output data on the device.
-	checkCudaErrors(cudaMalloc((void **) &g_inputData_d, inputSize));
-	checkCudaErrors(cudaMalloc((void **) &g_outputData_d, outputSize));
-
-	// copy data to the device.
-	checkCudaErrors(cudaMemcpy(g_inputData_d, g_inputData, inputSize, cudaMemcpyHostToDevice));
-
-	return EXIT_SUCCESS;
 }
 
 int main(int argc, char *argv[]) {
 
 	int ret = EXIT_SUCCESS;
-
 	if(argc < 2) {
 		(void) fprintf(stderr, "ERROR: Data filename not specified.\n");
 		return EXIT_FAILURE;
@@ -140,6 +140,9 @@ int main(int argc, char *argv[]) {
 	dim3 gridSize(SAMPLES,CHANNELS,1);
 	dim3 blockSize(1, 2*NUM_EL, 1);
 	map<<<gridSize, blockSize>>>(g_inputData_d, g_outputData_d, select);
+	cudaGetLastError();
+
+
 
 	int outputSize = SAMPLES * PFB_CHANNELS * NUM_EL * (2*sizeof(char));
 	g_outputData = (char*) malloc(outputSize);

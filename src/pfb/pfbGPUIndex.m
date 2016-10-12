@@ -36,11 +36,11 @@ fmax = fmin + PFB_CHANNELS-1;
 
 for i = 0:gridDim.x-1
     for j = 0:gridDim.y-1
-        absIdx = threadsPerBlock * (blockIdx.x(i+1) * gridDim.y + blockIdx.y(j+1)*blockDim.x) + threadIdx.y;
+        absIdx = blockDim.y * (blockIdx.x(i+1) * gridDim.y + blockIdx.y(j+1)) + threadIdx.y;
         IDX(j+1,i+1) = min(absIdx);
         if(j >= fmin && j <= fmax)
-            idx = mod(j,5);
-            midx = threadsPerBlock * (blockIdx.x(i+1) * gridDim.y/PFB_CHANNELS + blockIdx.y(idx+1)*blockDim.x) + threadIdx.y;
+            idx = mod(j,PFB_CHANNELS);
+            midx = blockDim.y * (blockIdx.x(i+1) * gridDim.y/PFB_CHANNELS + blockIdx.y(idx+1)) + threadIdx.y;
             MAP_IDX(idx+1,i+1) = min(midx);
             dataOut(midx + 1) = dataIn(absIdx + 1);
         end
