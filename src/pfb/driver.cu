@@ -101,6 +101,7 @@ __global__ void map(char *dataIn,
 	int channelMin = PFB_CHANNELS*channelSelect;
 	int channelMax = channelMin + (PFB_CHANNELS-1);
 
+	/*
 	// do noting if outside channels of interest
 	int f = blockIdx.y;
 	if ( f < channelMin || f > channelMax) {
@@ -111,6 +112,9 @@ __global__ void map(char *dataIn,
 	//int threadsPerBlock = blockDim.x*blockDim.y;
 	int absIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
 	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y/PFB_CHANNELS + f) + threadIdx.y;
+	*/
+	int absIdx = blockDim.y*(blockIdx.x*CHANNELS + (channelMin+blockIdx.y)) + threadIdx.y;
+	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
 
 	dataOut[mapIdx] = dataIn[absIdx];
 	return;
