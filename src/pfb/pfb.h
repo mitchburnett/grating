@@ -27,6 +27,7 @@
 #define DEF_NUM_CHANNELS		25  // System spec for total number of channels
 #define PFB_CHANNELS			5	// Number of coarse channels through PFB
 #define DEF_NUM_ELEMENTS		64  // System spec for number of elements
+#define SAMPLES					4000// Time samples.
 
 // FFT Plan configuration
 #define FFTPLAN_RANK 			1
@@ -45,12 +46,12 @@ typedef unsigned char BYTE;
 
 // methods
 int loadCoeff(int iCudaDevice);
-int runPFB();
-int loadDataToMem(void);
-int ReadData(void);
+int runPFB(signed char* inputData_h, signed char* outputData_h, int channelSelect);
+//int loadDataToMem(void);
+//int ReadData(void);
 
-__global__ void doPFB();
-__global__ void copyDataForFFT();
+__global__ void PFB_kernel(char2* pc2Data, float2* pf2FFTIn, float* pfPFBCoeff);
+__global__ void map(char2* dataIn, char2* dataOut, int channelSelect);
 
 int doFFT();
 

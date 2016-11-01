@@ -99,20 +99,7 @@ __global__ void map(char *dataIn,
 
 	// select the channel range
 	int channelMin = PFB_CHANNELS*channelSelect;
-	int channelMax = channelMin + (PFB_CHANNELS-1);
-
-	/*
-	// do noting if outside channels of interest
-	int f = blockIdx.y;
-	if ( f < channelMin || f > channelMax) {
-		return;
-	}
-	// determine absolute index in dataIn
-	f = f % PFB_CHANNELS;
-	//int threadsPerBlock = blockDim.x*blockDim.y;
-	int absIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
-	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y/PFB_CHANNELS + f) + threadIdx.y;
-	*/
+	
 	int absIdx = blockDim.y*(blockIdx.x*CHANNELS + (channelMin+blockIdx.y)) + threadIdx.y;
 	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
 
@@ -140,8 +127,8 @@ int main(int argc, char *argv[]) {
 	ret = init();
 
 	// run map
-	int select = 0;
-	dim3 gridSize(SAMPLES,CHANNELS,1);
+	int select = 2;
+	dim3 gridSize(SAMPLES,PFB_CHANNELS,1);
 	dim3 blockSize(1, 2*NUM_EL, 1);
 	map<<<gridSize, blockSize>>>(g_inputData_d, g_outputData_d, select);
 	checkCudaErrors(cudaGetLastError());	
@@ -153,8 +140,7 @@ int main(int argc, char *argv[]) {
 	checkCudaErrors(cudaMemcpy(g_outputData, g_outputData_d, outputSize, cudaMemcpyDeviceToHost));
 
 	//output the true data as a check.
-	/*
-	int file = 0;
+	/*int file = 0;
 	char outfileFull[256] = "outfileFull.dat\0";
 	file = open(outfile,
 					O_CREAT | O_TRUNC | O_WRONLY,

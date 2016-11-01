@@ -36,6 +36,7 @@ char2* g_pc2InBufRead = NULL;
 
 char2* g_pc2Data_d = NULL;
 char2* g_pc2DataRead_d = NULL;
+char2* g_pc2tmpData_d = NULL;
 
 float2* g_pf2FFTIn_d = NULL;
 float2* g_pf2FFTOut_d = NULL;
@@ -47,62 +48,49 @@ int g_iNumSubBands = DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS;
 float *g_pfPFBCoeff = NULL;
 float *g_pfPFBCoeff_d = NULL;
 
-// The main will potentially be a different function if this is part of a library?
-int runPFB(signed char* inputData_h,
-		   signed char* outputData_h
-		   unsigned char channelSelect) {
+int runPFB(char2* inputData_h,
+		   float2* outputData_h,
+		   int channelSelect) {
 
-	// PFB process variables
+	//process variables
 	cudaError_t iCUDARet = cudaSuccess;
+	int iRet = TRUE;
 	int iProcData = 0;
 	long int lProcDataAll = 0;
 
-	// consts
-	const int mcntMax = 20;
-	const int timeSamplesMax = 20;
+	//malloc and copy data to device
+	int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	int mapSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2tmpData_d, fullSize));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2Data_d, mapSize));
 
-	int minChannel = channelSelect * PFB_CHANNELS;
-	int maxChannel = minChannel + (PFB_CHANNELS - 1);
+	CUDASafeCallWithCleanUp(cudaMemcpy(g_pc2tmpData_d, inputData_h, fullSize, cudaMemcpyHostToDevice));
 
-	// extract channel data from full data stream.
-	int dataSize = mcntMax * timeSamplesMax * PFB_CHANNELS * DEF_NUM_ELEMENTS * 2*sizeof(char);
-	signed char* buffer[dataSize] = {};
+	// extract channel data from full data stream and load into buffer.
+	dim3 mapGSize(SAMPLES, PFB_CHANNELS, 1);
+	dim3 mapBSize(1, 2* DEF_NUM_ELEMENTS, 1);
+	map<<<mapGSize, mapBSize>>>(g_pc2tmpData_d, g_pc2Data_d, channelSelect);
+	CUDASafeCallWithCleanUp(cudaGetLastError());
+	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
-	int m = 0; // m count iter
-	int t = 0; // time samples
-	int f = 0; // freq channel
-	int e = 0; // element
-	ptr = 0;   // buffer 
-	for(m; m < mcntMax; m++) {
-		for(t; t < timeSamplesMax; t++) {
-			for(f = minChannel; f <= maxChannel; f++){
-				for(e; e < DEF_NUM_ELEMENTS - 1; e++) {
-					ch_idx = f * DEF_NUM_ELEMENTS;
-					t_idx = t * DEF_NUM_ELEMENTS * DEF_NUM_CHANNELS;
-					m_idx = m * timeSamplesMax * DEF_NUM_ELEMENTS * DEF_NUM_CHANNELS;
+	//PFB
+	PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2Data_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
+	CUDASafeCallWithCleanUp(cudaGetLastError());
+	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
-					buffer[ptr] = inputData_h[e + ch_idx + t_idx + m_idx];
-					ptr++;
-				}
-			}
-		}	
+	//FFT
+	iRet = doFFT();
+	if(iRet != EXIT_SUCCESS) {
+		(void) fprintf(stderr, "ERROR: FFT failed\n");
+		cleanUp();
+		return EXIT_FAILURE;
 	}
 
-	// Process data
-	while(!g_IsProcDone) {
+	// copy data back to host.
+	int outDataSize = g_iNumSubBands * g_iNFFT * (2*sizeof(float));
+	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
 
-		// load data onto device
-
-
-	}
-
-	/* Init */
-	return 0;
-
-}
-
-int loadData() {
-
+	return iRet;
 
 }
 
@@ -289,13 +277,67 @@ int loadCoeff(int iCudaDevice){
 
 }
 
-__global__ void map(char2 *pc2DataIn,
-					char2 *pc2DataOut,
-					unsigned char channelSelect) {
-	int threadsPerBlock = blockDim.x * blockDim.y;
-	int absIdx = threadsPerBlock * (blockIdx.x * gridDim.y + blockIdx.y * blockDim.x) + threadIdx.y;
+__global__ void map(char *dataIn,
+			   		char *dataOut,
+			   		int channelSelect) {
 
-	if absIdx
+	// select the channel range
+	int channelMin = PFB_CHANNELS*channelSelect;
+	
+	int absIdx = blockDim.y*(blockIdx.x*DEF_NUM_CHANNELS + (channelMin+blockIdx.y)) + threadIdx.y;
+	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
+
+	dataOut[mapIdx] = dataIn[absIdx];
+	return;
+}
+
+/* prepare data for PFB */
+__global__ void PFB_kernel(char4 *pc4Data,
+                      float4 *pf4FFTIn,
+                      float *pfPFBCoeff)
+{
+    int i = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int iNFFT = (gridDim.x * blockDim.x);
+    int j = 0;
+    int iAbsIdx = 0;
+    float4 f4PFBOut = make_float4(0.0, 0.0, 0.0, 0.0);
+    char4 c4Data = make_char4(0, 0, 0, 0);
+
+    for (j = 0; j < NUM_TAPS; ++j)
+    {
+        /* calculate the absolute index */
+        iAbsIdx = (j * iNFFT) + i;
+        /* get the address of the block */
+        c4Data = pc4Data[iAbsIdx];
+        
+        f4PFBOut.x += (float) c4Data.x * pfPFBCoeff[iAbsIdx];
+        f4PFBOut.y += (float) c4Data.y * pfPFBCoeff[iAbsIdx];
+        f4PFBOut.z += (float) c4Data.z * pfPFBCoeff[iAbsIdx];
+        f4PFBOut.w += (float) c4Data.w * pfPFBCoeff[iAbsIdx];
+    }
+
+    pf4FFTIn[i] = f4PFBOut;
+
+    return;
+}
+
+/* do fft on pfb data */
+int doFFT()
+{
+    cufftResult iCUFFTRet = CUFFT_SUCCESS;
+
+    /* execute plan */
+    iCUFFTRet = cufftExecC2C(g_stPlan,
+                             (cufftComplex*) g_pf2FFTIn_d,
+                             (cufftComplex*) g_pf2FFTOut_d,
+                             CUFFT_FORWARD);
+    if (iCUFFTRet != CUFFT_SUCCESS)
+    {
+        (void) fprintf(stderr, "ERROR! FFT failed!\n");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
 
 void __CUDASafeCallWithCleanUp(cudaError_t iRet,
