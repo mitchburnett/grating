@@ -68,13 +68,13 @@ int runPFB(char2* inputData_h,
 	dim3 mapGSize(SAMPLES, PFB_CHANNELS, 1);
 	dim3 mapBSize(1, 2* DEF_NUM_ELEMENTS, 1);
 	map<<<mapGSize, mapBSize>>>(g_pc2tmpData_d, g_pc2Data_d, channelSelect);
-	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 	CUDASafeCallWithCleanUp(cudaGetLastError());
+	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
 	//PFB
 	PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2Data_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
-	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 	CUDASafeCallWithCleanUp(cudaGetLastError());
+	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
 	//FFT
 	iRet = doFFT();
