@@ -71,6 +71,7 @@ int runPFB(char2* inputData_h,
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
+	/*
 	//PFB
 	PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2Data_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
 	CUDASafeCallWithCleanUp(cudaGetLastError());
@@ -84,10 +85,30 @@ int runPFB(char2* inputData_h,
 		return EXIT_FAILURE;
 	}
 	CUDASafeCallWithCleanUp(cudaGetLastError());
-
+	
 	// copy data back to host.
 	int outDataSize = g_iNumSubBands * g_iNFFT * (2*sizeof(float));
 	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
+	*/
+
+	char2* pcOuputData_h = NULL;
+	pcOuputData_h = (char2*) malloc(mapSize);
+	CUDASafeCallWithCleanUp(cudaMemcpy(pcOutputData_h, g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
+	// output the mapped data.
+	int file = 0;
+	char outfile[256] = "outfile_pfb.dat\0";
+	file = open(outfile,
+					O_CREAT | O_TRUNC | O_WRONLY,
+					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(file < EXIT_SUCCESS) {
+		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
+		return EXIT_FAILURE;
+	}
+
+	(void) write(file, pcOutputData_h, mapSize);
+	(void) close(file);
+
+	return EXIT_SUCCESS;
 
 	return iRet;
 
