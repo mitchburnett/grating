@@ -36,7 +36,6 @@ char2* g_pc2InBufRead = NULL;
 
 char2* g_pc2Data_d = NULL;
 char2* g_pc2DataRead_d = NULL;
-char2* g_pc2tmpData_d = NULL;
 
 float2* g_pf2FFTIn_d = NULL;
 float2* g_pf2FFTOut_d = NULL;
@@ -49,25 +48,29 @@ int g_iNumSubBands = PFB_CHANNELS * DEF_NUM_ELEMENTS;
 float *g_pfPFBCoeff = NULL;
 float *g_pfPFBCoeff_d = NULL;
 
-int runPFB(char2* inputData_h,
-		   float2* outputData_h,
+char* g_pcInputData_d = NULL;
+
+int runPFB(char* inputData_h,
+		   char2* outputData_h,
 		   int channelSelect) {
 
 	//process variables
-	int iRet = TRUE;
+	int iRet = EXIT_SUCCESS;
 
 	//malloc and copy data to device
 	int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	int mapSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2tmpData_d, fullSize));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pcInputData_d, fullSize));
+	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pcInputData_d, 0, fullSize));
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2Data_d, mapSize));
+	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pc2Data_d, 0, mapSize));
 
-	CUDASafeCallWithCleanUp(cudaMemcpy(g_pc2tmpData_d, inputData_h, fullSize, cudaMemcpyHostToDevice));
+	CUDASafeCallWithCleanUp(cudaMemcpy(g_pcInputData_d, inputData_h, fullSize, cudaMemcpyHostToDevice));
 
 	// extract channel data from full data stream and load into buffer.
 	dim3 mapGSize(SAMPLES, PFB_CHANNELS, 1);
-	dim3 mapBSize(1, 2* DEF_NUM_ELEMENTS, 1);
-	map<<<mapGSize, mapBSize>>>(g_pc2tmpData_d, g_pc2Data_d, channelSelect);
+	dim3 mapBSize(1, DEF_NUM_ELEMENTS, 1);
+	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, g_pc2Data_d, channelSelect);
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
@@ -91,24 +94,7 @@ int runPFB(char2* inputData_h,
 	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
 	*/
 
-	char2* pcOutputData_h = NULL;
-	pcOutputData_h = (char2*) malloc(mapSize);
-	CUDASafeCallWithCleanUp(cudaMemcpy(pcOutputData_h, g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
-	// output the mapped data.
-	int file = 0;
-	char outfile[256] = "outfile_pfb.dat\0";
-	file = open(outfile,
-					O_CREAT | O_TRUNC | O_WRONLY,
-					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	if(file < EXIT_SUCCESS) {
-		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
-		return EXIT_FAILURE;
-	}
-
-	(void) write(file, pcOutputData_h, mapSize);
-	(void) close(file);
-
-	return EXIT_SUCCESS;
+	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
 
 	return iRet;
 
@@ -297,7 +283,7 @@ int loadCoeff(int iCudaDevice){
 
 }
 
-__global__ void map(char2* dataIn,
+__global__ void map(char* dataIn,
 			   		char2* dataOut,
 			   		int channelSelect) 
 {
@@ -305,10 +291,11 @@ __global__ void map(char2* dataIn,
 	// select the channel range
 	int channelMin = PFB_CHANNELS*channelSelect;
 	
-	int absIdx = blockDim.y*(blockIdx.x*DEF_NUM_CHANNELS + (channelMin+blockIdx.y)) + threadIdx.y;
+	int absIdx = 2 * blockDim.y*(blockIdx.x*DEF_NUM_CHANNELS + (channelMin+blockIdx.y)) + 2 * threadIdx.y;  // times 2 because we are mapping a sequence of values to char2 array.
 	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
 
-	dataOut[mapIdx] = dataIn[absIdx];
+	dataOut[mapIdx].x = dataIn[absIdx];
+	dataOut[mapIdx].y = dataIn[absIdx+1];
 	return;
 }
 

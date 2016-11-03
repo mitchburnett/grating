@@ -30,7 +30,7 @@ dataOut = zeros(N*PFB_CHANNELS*NUM_EL*2,1);
 
 IDX = zeros(gridDim.y, gridDim.x);
 MAP_IDX = zeros(gridDim.y/5, gridDim.x);
-select = 2;
+select = 0;
 fmin = select*PFB_CHANNELS;
 fmax = fmin + PFB_CHANNELS-1;
 
@@ -93,7 +93,7 @@ dataOut = zeros(1,N*PFB_CHANNELS*NUM_EL*2);
 IDX = zeros(N, FREQ);
 MAP_IDX = zeros(N,PFB_CHANNELS);
 
-select = 2;
+select = 0;
 fmin = select*PFB_CHANNELS;
 fmax = fmin + PFB_CHANNELS-1;
 

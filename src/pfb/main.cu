@@ -1,15 +1,15 @@
 #include "pfb.h"
 
-char2* g_inputData = NULL;
-float2* g_outputData = NULL;
-char2* g_inputData_d = NULL;
+char* g_inputData = NULL;
+char* g_inputData_d = NULL;
+char2* g_outputData = NULL;
 
 int loadData(char* f){
 	int ret = EXIT_SUCCESS;
 	int file =  0;
 
 	int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	g_inputData = (char2*) malloc(readSize);
+	g_inputData = (char*) malloc(readSize);
 	if(NULL == g_inputData) {
 		(void) fprintf(stderr, "ERROR: Memory allocation failed! %s.\n", strerror(errno));
 		return EXIT_FAILURE;
@@ -46,23 +46,23 @@ int main(int argc, char *argv[]) {
 	(void) strncpy(filename, argv[1], 256);
 	filename[255] = '\0';
 
+	// load data into memory
+	ret = loadData(filename);
+	if (ret == EXIT_FAILURE) {
+		return EXIT_FAILURE;
+	}
+
 	// init cuda device
 	int iCudaDevice = DEF_CUDA_DEVICE;
 	ret = loadCoeff(iCudaDevice);
 
 	// malloc data arrays
 	int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	int outputSize = PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
+	int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char)); // need to convince myself of this output data size.
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_inputData_d, inputSize));
 	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_inputData_d, 0, inputSize));
 
-	g_outputData = (float2*) malloc(outputSize);
-
-	// load data into memory
-	ret = loadData(filename);
-	if (ret == EXIT_FAILURE) {
-		return EXIT_FAILURE;
-	}
+	g_outputData = (char2*) malloc(outputSize);
 
 	// start pfb function
 	int select = 0;

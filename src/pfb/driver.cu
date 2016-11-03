@@ -28,9 +28,9 @@
 
 
 char* g_inputData = NULL;
-char* g_outputData = NULL;
+char2* g_outputData = NULL;
 char* g_inputData_d = NULL;
-char* g_outputData_d = NULL;
+char2* g_outputData_d = NULL;
 
 int loadData(char* f){
 	int ret = EXIT_SUCCESS;
@@ -93,17 +93,18 @@ int init(){
 	return EXIT_SUCCESS;
 }
 
-__global__ void map(char *dataIn,
-			   		char *dataOut,
+__global__ void map(char* dataIn,
+			   		char2* dataOut,
 			   		int channelSelect) {
 
 	// select the channel range
 	int channelMin = PFB_CHANNELS*channelSelect;
 	
-	int absIdx = blockDim.y*(blockIdx.x*CHANNELS + (channelMin+blockIdx.y)) + threadIdx.y;
+	int absIdx = 2 * blockDim.y*(blockIdx.x*CHANNELS + (channelMin+blockIdx.y)) + 2 * threadIdx.y; // times 2 because we are mapping a sequence of values to char2 array.
 	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
 
-	dataOut[mapIdx] = dataIn[absIdx];
+	dataOut[mapIdx].x = dataIn[absIdx];
+	dataOut[mapIdx].y = dataIn[absIdx+1];
 	return;
 }
 
@@ -127,16 +128,16 @@ int main(int argc, char *argv[]) {
 	ret = init();
 
 	// run map
-	int select = 2;
+	int select = 0;
 	dim3 gridSize(SAMPLES,PFB_CHANNELS,1);
-	dim3 blockSize(1, 2*NUM_EL, 1);
+	dim3 blockSize(1, NUM_EL, 1);
 	map<<<gridSize, blockSize>>>(g_inputData_d, g_outputData_d, select);
 	checkCudaErrors(cudaGetLastError());	
 
 
 
 	int outputSize = SAMPLES * PFB_CHANNELS * NUM_EL * (2*sizeof(char));
-	g_outputData = (char*) malloc(outputSize);
+	g_outputData = (char2*) malloc(outputSize);
 	checkCudaErrors(cudaMemcpy(g_outputData, g_outputData_d, outputSize, cudaMemcpyDeviceToHost));
 
 	//output the true data as a check.
