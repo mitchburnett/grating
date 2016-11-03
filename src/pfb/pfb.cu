@@ -91,8 +91,8 @@ int runPFB(char2* inputData_h,
 	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
 	*/
 
-	char2* pcOuputData_h = NULL;
-	pcOuputData_h = (char2*) malloc(mapSize);
+	char2* pcOutputData_h = NULL;
+	pcOutputData_h = (char2*) malloc(mapSize);
 	CUDASafeCallWithCleanUp(cudaMemcpy(pcOutputData_h, g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
 	// output the mapped data.
 	int file = 0;
