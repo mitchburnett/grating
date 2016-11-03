@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
 	// get data filename
 	int ret = EXIT_SUCCESS;
-	if(argc < 2) {
+	if(argc< 2) {
 		(void) fprintf(stderr, "ERROR: Data filename not specified.\n");
 		return EXIT_FAILURE;
 	}
@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
 
 	// process return from pfb - write to file
 	int file = 0;
+	
 	char outfile[256] = "outfile.dat\0";
 	file = open(outfile,
 					O_CREAT | O_TRUNC | O_WRONLY,

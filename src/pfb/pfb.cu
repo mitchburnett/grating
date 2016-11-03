@@ -43,7 +43,8 @@ float2* g_pf2FFTOut_d = NULL;
 
 int g_iNFFT = DEF_LEN_SPEC;
 int g_iNTaps = NUM_TAPS;
-int g_iNumSubBands = DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS;
+//int g_iNumSubBands = DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS;
+int g_iNumSubBands = PFB_CHANNELS * DEF_NUM_ELEMENTS;
 
 float *g_pfPFBCoeff = NULL;
 float *g_pfPFBCoeff_d = NULL;
@@ -53,10 +54,7 @@ int runPFB(char2* inputData_h,
 		   int channelSelect) {
 
 	//process variables
-	cudaError_t iCUDARet = cudaSuccess;
 	int iRet = TRUE;
-	int iProcData = 0;
-	long int lProcDataAll = 0;
 
 	//malloc and copy data to device
 	int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
@@ -70,13 +68,13 @@ int runPFB(char2* inputData_h,
 	dim3 mapGSize(SAMPLES, PFB_CHANNELS, 1);
 	dim3 mapBSize(1, 2* DEF_NUM_ELEMENTS, 1);
 	map<<<mapGSize, mapBSize>>>(g_pc2tmpData_d, g_pc2Data_d, channelSelect);
-	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
+	CUDASafeCallWithCleanUp(cudaGetLastError());
 
 	//PFB
 	PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2Data_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
-	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
+	CUDASafeCallWithCleanUp(cudaGetLastError());
 
 	//FFT
 	iRet = doFFT();
@@ -85,6 +83,7 @@ int runPFB(char2* inputData_h,
 		cleanUp();
 		return EXIT_FAILURE;
 	}
+	CUDASafeCallWithCleanUp(cudaGetLastError());
 
 	// copy data back to host.
 	int outDataSize = g_iNumSubBands * g_iNFFT * (2*sizeof(float));
@@ -157,30 +156,30 @@ int loadCoeff(int iCudaDevice){
 						"\tInput data buffer:\t%g MB\n"
 						"\tFFT in array:\t%g MB\n"
 						"\tFFT out array:\t%g MB\n"
-						"\tPFB Coefficients: %d KB\n",
+						"\tPFB Coefficients: %f KB\n",
 						((float) lTotCUDAMalloc) / (1024*1024),
 						((float) stDevProp.totalGlobalMem) / (1024*1024),
 						((float) g_iSizeRead) / (1024 * 1024),
 						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
-						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024)),
-						((float) g_iNumSubBands * g_iNFFT * sizeof(float));
+						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
+						((float) g_iNumSubBands * g_iNFFT * sizeof(float)));
 		return EXIT_FAILURE;
 	}
 	
 	// print memory usage report.
-	(void) fprintf(stderr,
+	(void) fprintf(stdout,
 					"INFO: Total memory requested on GPU is %g MB of %g possible MB.\n"
 					"\t**** Memory breakdown ****\n"
 					"\tInput data buffer:\t%g MB\n"
 					"\tFFT in array:\t%g MB\n"
 					"\tFFT out array:\t%g MB\n"
-					"\tPFB Coefficients: %d KB\n",
+					"\tPFB Coefficients: %f KB\n",
 					((float) lTotCUDAMalloc) / (1024*1024),
 					((float) stDevProp.totalGlobalMem) / (1024*1024),
 					((float) g_iSizeRead) / (1024 * 1024),
 					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
-					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024)),
-					((float) g_iNumSubBands * g_iNFFT * sizeof(float));
+					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
+					((float) g_iNumSubBands * g_iNFFT * sizeof(float)));
 
 	/*************************/
 	/* Load PFB coefficients */
@@ -277,9 +276,10 @@ int loadCoeff(int iCudaDevice){
 
 }
 
-__global__ void map(char *dataIn,
-			   		char *dataOut,
-			   		int channelSelect) {
+__global__ void map(char2* dataIn,
+			   		char2* dataOut,
+			   		int channelSelect) 
+{
 
 	// select the channel range
 	int channelMin = PFB_CHANNELS*channelSelect;
@@ -292,31 +292,29 @@ __global__ void map(char *dataIn,
 }
 
 /* prepare data for PFB */
-__global__ void PFB_kernel(char4 *pc4Data,
-                      float4 *pf4FFTIn,
-                      float *pfPFBCoeff)
+__global__ void PFB_kernel(char2* pc2Data,
+                      float2* pf2FFTIn,
+                      float* pfPFBCoeff)
 {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     int iNFFT = (gridDim.x * blockDim.x);
     int j = 0;
     int iAbsIdx = 0;
-    float4 f4PFBOut = make_float4(0.0, 0.0, 0.0, 0.0);
-    char4 c4Data = make_char4(0, 0, 0, 0);
+    float2 f2PFBOut = make_float2(0.0, 0.0);
+    char2 c2Data = make_char2(0, 0);
 
     for (j = 0; j < NUM_TAPS; ++j)
     {
         /* calculate the absolute index */
         iAbsIdx = (j * iNFFT) + i;
         /* get the address of the block */
-        c4Data = pc4Data[iAbsIdx];
+        c2Data = pc2Data[iAbsIdx];
         
-        f4PFBOut.x += (float) c4Data.x * pfPFBCoeff[iAbsIdx];
-        f4PFBOut.y += (float) c4Data.y * pfPFBCoeff[iAbsIdx];
-        f4PFBOut.z += (float) c4Data.z * pfPFBCoeff[iAbsIdx];
-        f4PFBOut.w += (float) c4Data.w * pfPFBCoeff[iAbsIdx];
+        f2PFBOut.x += (float) c2Data.x * pfPFBCoeff[iAbsIdx];
+        f2PFBOut.y += (float) c2Data.y * pfPFBCoeff[iAbsIdx];
     }
 
-    pf4FFTIn[i] = f4PFBOut;
+    pf2FFTIn[i] = f2PFBOut;
 
     return;
 }
