@@ -58,11 +58,12 @@ int main(int argc, char *argv[]) {
 
 	// malloc data arrays
 	int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char)); // need to convince myself of this output data size.
+	int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_inputData_d, inputSize));
 	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_inputData_d, 0, inputSize));
 
 	g_outputData = (float2*) malloc(outputSize);
+	memset(g_outputData, 0, outputSize);
 
 	// start pfb function
 	int select = 0;
