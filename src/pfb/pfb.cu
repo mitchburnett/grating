@@ -274,14 +274,18 @@ int loadCoeff(int iCudaDevice){
 	// set kernel parameters
 	(void) fprintf(stdout, "\tSetting kernel parameters...\n");
 	if(g_iNFFT < g_iMaxThreadsPerBlock) {
-		g_dimBPFB.x   = g_iNFFT;
+		g_dimBPFB.x  = g_iNFFT;
 		g_dimBCopy.x = g_iNFFT;
 	} else {
-		g_dimBPFB.x   = g_iMaxThreadsPerBlock;
+		g_dimBPFB.x  = g_iMaxThreadsPerBlock;
 		g_dimBCopy.x = g_iMaxThreadsPerBlock;
 	}
 	g_dimGPFB.x  = (g_iNumSubBands * g_iNFFT) / g_dimBPFB.x;
 	g_dimGCopy.x = (g_iNumSubBands * g_iNFFT) / g_dimBCopy.x;
+
+	(void) fprintf(stdout, "\t\tKernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
+							g_dimGPFB.x, g_dimGPFB.y, g_dimGPFB.z,
+							g_dimBPFB.x, g_dimBPFB.y, g_dimGPFB.z);
 
 	// create a CUFFT plan
 	(void) fprintf(stdout, "\tCreating cuFFT plan...\n");

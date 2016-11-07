@@ -1,7 +1,7 @@
 #include "pfb.h"
 
 char* g_inputData = NULL;
-char* g_inputData_d = NULL;
+//char* g_inputData_d = NULL;
 float2* g_outputData = NULL;
 
 int loadData(char* f){
@@ -57,16 +57,14 @@ int main(int argc, char *argv[]) {
 	ret = loadCoeff(iCudaDevice);
 
 	// malloc data arrays
-	int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	//int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_inputData_d, inputSize));
-	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_inputData_d, 0, inputSize));
 
 	g_outputData = (float2*) malloc(outputSize);
 	memset(g_outputData, 0, outputSize);
 
 	// start pfb function
-	int select = 0;
+	int select = 1;
 	ret = runPFB(g_inputData, g_outputData, select);
 	if (ret == EXIT_FAILURE) {
 		(void) fprintf(stderr, "ERROR: runPFB failed!\n");
