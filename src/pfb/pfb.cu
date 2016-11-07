@@ -51,11 +51,15 @@ float *g_pfPFBCoeff_d = NULL;
 char* g_pcInputData_d = NULL;
 
 int runPFB(char* inputData_h,
-		   char2* outputData_h,
+		   float2* outputData_h,
 		   int channelSelect) {
 
 	//process variables
 	int iRet = EXIT_SUCCESS;
+	int countPFB = 0; // count number of times pfb fires.
+	int countFFT = 0; // count number of FFT's computed.
+	long lProcData = 0; // count how much data processed
+	long ltotData = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * 2; // total amount of data to proc
 
 	//malloc and copy data to device
 	int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
@@ -74,27 +78,45 @@ int runPFB(char* inputData_h,
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
-	/*
-	//PFB
-	PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2Data_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
-	CUDASafeCallWithCleanUp(cudaGetLastError());
-	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
+	// p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
+	g_pc2DataRead_d = g_pc2DataRead_d;
 
-	//FFT
-	iRet = doFFT();
-	if(iRet != EXIT_SUCCESS) {
-		(void) fprintf(stderr, "ERROR: FFT failed\n");
-		cleanUp();
-		return EXIT_FAILURE;
+	while(!g_IsProcDone){
+
+
+		//PFB
+		PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
+		CUDASafeCallWithCleanUp(cudaGetLastError());
+		CUDASafeCallWithCleanUp(cudaThreadSynchronize());
+
+		//update data read pointer
+		g_pc2DataRead_d += g_iNumSubBands * g_iNFFT;
+		++countPFB;
+
+		//FFT
+		iRet = doFFT();
+		if(iRet != EXIT_SUCCESS) {
+			(void) fprintf(stderr, "ERROR: FFT failed\n");
+			cleanUp();
+			return EXIT_FAILURE;
+		}
+		CUDASafeCallWithCleanUp(cudaGetLastError());
+		++countFFT;
+
+		// copy data back to host.
+		int outDataSize = g_iNumSubBands * g_iNFFT * (2*sizeof(float));
+		CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
+
+		//update output data pointer.
+		outputData_h += g_iNumSubBands * g_iNFFT;
+
+		//update proc data
+		lProcData += g_iNumSubBands * g_iNFFT * 2*sizeof(char);
+		if(lProcData = ltotData){
+			g_IsProcDone = TRUE;
+		}
+
 	}
-	CUDASafeCallWithCleanUp(cudaGetLastError());
-	
-	// copy data back to host.
-	int outDataSize = g_iNumSubBands * g_iNFFT * (2*sizeof(float));
-	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
-	*/
-
-	CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
 
 	return iRet;
 

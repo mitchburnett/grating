@@ -2,7 +2,7 @@
 
 char* g_inputData = NULL;
 char* g_inputData_d = NULL;
-char2* g_outputData = NULL;
+float2* g_outputData = NULL;
 
 int loadData(char* f){
 	int ret = EXIT_SUCCESS;
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_inputData_d, inputSize));
 	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_inputData_d, 0, inputSize));
 
-	g_outputData = (char2*) malloc(outputSize);
+	g_outputData = (float2*) malloc(outputSize);
 
 	// start pfb function
 	int select = 0;

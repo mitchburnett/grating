@@ -46,7 +46,7 @@ typedef unsigned char BYTE;
 
 // methods
 int loadCoeff(int iCudaDevice);
-int runPFB(char* inputData_h, char2* outputData_h, int channelSelect);
+int runPFB(char* inputData_h, float2* outputData_h, int channelSelect);
 //int loadDataToMem(void);
 //int ReadData(void);
 
