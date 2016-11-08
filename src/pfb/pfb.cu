@@ -59,7 +59,7 @@ int runPFB(char* inputData_h,
 	int countPFB = 0; // count number of times pfb fires.
 	int countFFT = 0; // count number of FFT's computed.
 	long lProcData = 0; // count how much data processed
-	long ltotData = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * 2; // total amount of data to proc
+	long ltotData = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS; // total amount of data to proc
 
 	//malloc and copy data to device
 	int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
@@ -111,7 +111,7 @@ int runPFB(char* inputData_h,
 		outputData_h += g_iNumSubBands * g_iNFFT;
 
 		//update proc data
-		lProcData += g_iNumSubBands * g_iNFFT * 2*sizeof(char);
+		lProcData += g_iNumSubBands * g_iNFFT;
 		(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
 		if(lProcData == ltotData){
 			g_IsProcDone = TRUE;
