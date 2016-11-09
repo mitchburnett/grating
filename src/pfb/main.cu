@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 	memset(g_outputData, 0, outputSize);
 
 	// start pfb function
-	int select = 1;
+	int select = 0;
 	ret = runPFB(g_inputData, g_outputData, select);
 	if (ret == EXIT_FAILURE) {
 		(void) fprintf(stderr, "ERROR: runPFB failed!\n");

@@ -83,7 +83,6 @@ int runPFB(char* inputData_h,
 
 	while(!g_IsProcDone){
 
-		(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
 		//PFB
 		PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
 		CUDASafeCallWithCleanUp(cudaGetLastError());
@@ -112,8 +111,9 @@ int runPFB(char* inputData_h,
 
 		//update proc data
 		lProcData += g_iNumSubBands * g_iNFFT;
+		(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
 		(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
-		if(lProcData == ltotData){
+		if(lProcData == ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
 			g_IsProcDone = TRUE;
 		}
 
