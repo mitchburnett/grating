@@ -25,7 +25,6 @@ threadsPerBlock = blockDim.x*blockDim.y;
 threadIdx.y = 0:threadsPerBlock-1;
 threadIdx.x = 1;
 
-
 dataOut = zeros(N*PFB_CHANNELS*NUM_EL*2,1);
 
 IDX = zeros(gridDim.y, gridDim.x);

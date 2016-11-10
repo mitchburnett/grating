@@ -1,6 +1,6 @@
 #include "pfb.h"
 
-__global__ map(char2 *dataIn,
+__global__ map(char *dataIn,
 			   char2 *dataOut,
 			   int channelSelect) {
 
