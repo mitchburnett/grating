@@ -53,7 +53,7 @@ xlabel('Frequency MHz');
 ylabel('Magnitude (dB)');
 
 %% use matlab to look at and compute spectrum
-f = fopen('data.dat', 'r');
+f = fopen('single_tone_5Mhz.dat', 'r');
 input = fread(f, 'schar');
 fclose(f);
 
@@ -86,7 +86,7 @@ F = zeros(windows,pfbChannels*nfft);
 for i = 1:windows
     slice = d( (i-1)*nfft+1 : (nfft*ntaps-1) +(i-1)*nfft);
     f = fft(d,nfft);
-    F(i,:) = spectra;
+    F(i,:) = f;
 end
 
 F = mean(F,1);

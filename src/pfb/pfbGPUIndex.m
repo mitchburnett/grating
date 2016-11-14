@@ -6,7 +6,7 @@ FREQ = 25;
 PFB_CHANNELS = 5;
 
 %% load data
-f = fopen('data.dat', 'r');
+f = fopen('full_tone_set.dat', 'r');
 dataIn = fread(f, 'schar');
 fclose(f);
 
@@ -92,7 +92,7 @@ dataOut = zeros(1,N*PFB_CHANNELS*NUM_EL*2);
 IDX = zeros(N, FREQ);
 MAP_IDX = zeros(N,PFB_CHANNELS);
 
-select = 0;
+select = 1;
 fmin = select*PFB_CHANNELS;
 fmax = fmin + PFB_CHANNELS-1;
 

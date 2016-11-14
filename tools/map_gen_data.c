@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 
 #include <stdlib.h>
@@ -59,18 +60,24 @@ int main(int argc, char *argv[]) {
 	for(n = 0; n < N; n++) {
 		for(f = 0; f < CHANNELS; f++) {
 
-			//use the same sample for all elements
-			cDataReX = SCALE_FACTOR * (0.1 * cos(2*M_PI * freq[f] * n / F_S));
-			cDataImY = SCALE_FACTOR * (0.1 * sin(2*M_PI * freq[f] * n / F_S));
-			for(e = 0; e < 2*NUM_EL; e++) {
-				
-				int idx = e + f * (2 * NUM_EL);
-				if( !(e%2) ) {
-				//create interleaved samples for real and Im 
-				toWrite[idx] = cDataReX;
-				} else {
-				toWrite[idx] = cDataImY;
+			if(f==0){ // only insert one tone
+
+				//use the same sample for all elements
+				cDataReX = SCALE_FACTOR * (0.1 * cos(2*M_PI * freq[f] * n / F_S));
+				cDataImY = SCALE_FACTOR * (0.1 * sin(2*M_PI * freq[f] * n / F_S));
+				for(e = 0; e < 2*NUM_EL; e++) {
+					
+					int idx = e + f * (2 * NUM_EL);
+					if( !(e%2) ) {
+					//create interleaved samples for real and Im 
+					toWrite[idx] = cDataReX;
+					} else {
+					toWrite[idx] = cDataImY;
+					}
 				}
+			} else {
+				cDataReX = 0;
+				cDataImY = 0;
 			}
 		}
 		(void) write(iFile, toWrite, NUM_EL*CHANNELS*(2*sizeof(char)));

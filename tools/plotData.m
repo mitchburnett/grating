@@ -2,7 +2,7 @@
 clearvars;
 close all;
 
-f = fopen('../src/pfb/data.dat', 'r');
+f = fopen('../src/pfb/single_tone_5Mhz.dat', 'r');
 d = fread(f, 'schar');
 fclose(f);
 
