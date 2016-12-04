@@ -55,7 +55,7 @@ xlim([0, fs]);
 xlabel('Frequency (kHz)');
 ylabel('Magnitude (dB)');
 
-set(gca, 'XTick', [0:10:300]);
+set(gca, 'XTick', [0:20:300]);
 for i = 2:5
     ch_idx = i;
     el_data = CH((ch_idx-1)*numEl+1:ch_idx*numEl,:);
@@ -66,6 +66,6 @@ for i = 2:5
     xlabel('Frequency (kHz)');
     ylabel('Magnitude (dB)');
 
-    set(gca, 'XTick', [0:10:300]);
+    set(gca, 'XTick', [0:20:300]);
 end
 
