@@ -15,7 +15,7 @@
 
 #define LEN_GENSTRING 256
 #define SCALE_FACTOR  127
-#define F_S		      256   // MHz
+#define F_S		      303.0 // KHz
 #define N			  4000  // Time samples
 #define CHANNELS	  25    // Freq Channels
 #define NUM_EL		  64    // Antenna Elements
@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
 	int i = 0;
 
 	// generate freq array of
-	int channelBandgap = 5;		// MHz jumps
+	int channelBandgap = 10;		// KHz jumps
 	float freq[CHANNELS] = {};
-	for(i = 1; i <= CHANNELS; i++) {
-		freq[i-1] = channelBandgap * i;
+	for(i = 0; i <= CHANNELS; i++) {
+		freq[i] = channelBandgap * i + 5;
 	}
 
 	int n = 0;
