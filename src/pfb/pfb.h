@@ -52,6 +52,7 @@ int runPFB(char* inputData_h, float2* outputData_h, int channelSelect);
 
 __global__ void PFB_kernel(char2* pc2Data, float2* pf2FFTIn, float* pfPFBCoeff);
 __global__ void map(char* dataIn, char2* dataOut, int channelSelect);
+__global__ void CopyDataForFFT(char2* pc2Data, float2* pf2FFTIn);
 
 int doFFT();
 

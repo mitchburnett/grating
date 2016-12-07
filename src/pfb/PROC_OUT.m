@@ -22,7 +22,7 @@ size_slice = coarseCh*(numEl*2)*nfft;
 rows = length(output)/size_slice; % This is not the same size as windows and need to figure out why.
 
 CH = zeros(numEl*coarseCh, nfft);
-for i = 1:rows
+for i = 1:windows
     slice = output((i-1)*size_slice+1:i*size_slice);
     tmp = reshape(slice, [coarseCh*(2*numEl) nfft]);
     
@@ -37,35 +37,36 @@ for i = 1:rows
     end
 end
 % time average CH
-CH = CH/rows;
+CH = CH/windows;
 
 
 %% Plot element and channel
 el_idx = 1; % [1 64]
 ch_idx = 1; % [1 5]
 
-faxis = linspace(0, fs, nfft);
+faxis = 0:fs/nfft:fs-1/nfft;
 el_data = CH((ch_idx-1)*numEl+1:ch_idx*numEl,:);
 el = el_data(el_idx, :);
 
-figure(1);
+figure(2); clf;
 subplot(321);
 plot(faxis, 10*log10(el+.001)); grid on;
-xlim([0, fs]);
+xlim([min(faxis), max(faxis)]);
 xlabel('Frequency (kHz)');
 ylabel('Magnitude (dB)');
-
-set(gca, 'XTick', [0:20:300]);
+title('Coarse Channel 1');
+set(gca, 'xtick', [0:14]*20 + 5);
 for i = 2:5
     ch_idx = i;
     el_data = CH((ch_idx-1)*numEl+1:ch_idx*numEl,:);
     el = el_data(el_idx, :);
     subplot(3,2,i);
     plot(faxis, 10*log10(el+.001)); grid on;
-    xlim([0, fs]);
+    xlim([min(faxis), max(faxis)]);
     xlabel('Frequency (kHz)');
     ylabel('Magnitude (dB)');
+    title(['coarse channel' num2str(i)]);
+    set(gca, 'xtick', [0:14]*20 + 5);
 
-    set(gca, 'XTick', [0:20:300]);
 end
 

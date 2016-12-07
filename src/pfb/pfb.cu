@@ -57,6 +57,7 @@ int runPFB(char* inputData_h,
 	//process variables
 	int iRet = EXIT_SUCCESS;
 	int countPFB = 0; // count number of times pfb fires.
+	int countCpyFFT = 0;
 	int countFFT = 0; // count number of FFT's computed.
 	long lProcData = 0; // count how much data processed
 	long ltotData = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS; // total amount of data to proc
@@ -80,17 +81,24 @@ int runPFB(char* inputData_h,
 
 	// p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
 	g_pc2DataRead_d = g_pc2Data_d;
-
+	int pfb_on = 1;
 	while(!g_IsProcDone){
 
-		//PFB
-		PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
-		CUDASafeCallWithCleanUp(cudaGetLastError());
-		CUDASafeCallWithCleanUp(cudaThreadSynchronize());
+		if(pfb_on) {
+			//PFB
+			PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
+			CUDASafeCallWithCleanUp(cudaGetLastError());
+			CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
-		//update data read pointer
-		g_pc2DataRead_d += g_iNumSubBands * g_iNFFT;
-		++countPFB;
+			//update data read pointer
+			g_pc2DataRead_d += g_iNumSubBands * g_iNFFT;
+			++countPFB;
+		} else {
+			CopyDataForFFT<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d);
+
+			g_pc2DataRead_d += g_iNumSubBands * g_iNFFT;
+			++countCpyFFT;
+		}
 
 		//FFT
 		iRet = doFFT();
@@ -118,6 +126,8 @@ int runPFB(char* inputData_h,
 		}
 
 	}
+
+	cleanUp();
 
 	return iRet;
 
@@ -350,6 +360,16 @@ __global__ void PFB_kernel(char2* pc2Data,
     }
 
     pf2FFTIn[i] = f2PFBOut;
+
+    return;
+}
+
+__global__ void CopyDataForFFT(char2 *pc2Data, float2 *pf2FFTIn)
+{
+    int i = (blockIdx.x * blockDim.x) + threadIdx.x;
+
+    pf2FFTIn[i].x = (float) pc2Data[i].x;
+    pf2FFTIn[i].y = (float) pc2Data[i].y;
 
     return;
 }

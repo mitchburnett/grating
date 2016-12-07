@@ -1,6 +1,6 @@
 clearvars;
 N = 4000;
-fs = 250;
+fs = 303;
 totalChannels = 1;
 numEl = 64;
 subbands = numEl*2*totalChannels;
