@@ -68,7 +68,8 @@ int main(int argc, char *argv[]) {
 	ret = runPFB(g_inputData, g_outputData, select);
 	if (ret == EXIT_FAILURE) {
 		(void) fprintf(stderr, "ERROR: runPFB failed!\n");
-		cleanUp();
+		free(g_inputData);
+		free(g_outputData);
 		return EXIT_FAILURE;
 	}
 
@@ -81,11 +82,16 @@ int main(int argc, char *argv[]) {
 					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if(file < EXIT_SUCCESS) {
 		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
+		free(g_inputData);
+		free(g_outputData);
 		return EXIT_FAILURE;
 	}
 
 	(void) write(file, g_outputData, outputSize);
 	(void) close(file);
+
+	free(g_inputData);
+	free(g_outputData);
 
 	return EXIT_SUCCESS;
 }

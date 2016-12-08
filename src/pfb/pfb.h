@@ -31,11 +31,11 @@
 
 // FFT Plan configuration
 #define FFTPLAN_RANK 			1
-#define FFTPLAN_ISTRIDE			(2 * g_iNumSubBands)
-#define FFTPLAN_OSTRIDE			(2 * g_iNumSubBands)
+#define FFTPLAN_ISTRIDE			(g_iNumSubBands) // All of these had a times 2. The speculation is that it was added because of the X and Y Pol and that I dont need them when considering real and imaginary. And now that I type this out I believe it to do be true. Because I take the real and imaginary parts into a float2 data structure I believe.
+#define FFTPLAN_OSTRIDE			(g_iNumSubBands)
 #define FFTPLAN_IDIST			1
 #define FFTPLAN_ODIST			1
-#define FFTPLAN_BATCH			(2 * g_iNumSubBands)
+#define FFTPLAN_BATCH			(g_iNumSubBands)
 
 // coeff file configuration
 #define FILE_COEFF_PREFIX		"coeff"
@@ -57,6 +57,7 @@ __global__ void CopyDataForFFT(char2* pc2Data, float2* pf2FFTIn);
 int doFFT();
 
 void cleanUp(void);
+int resetDevice(void);
 
 #define CUDASafeCallWithCleanUp(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
 

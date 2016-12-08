@@ -79,6 +79,26 @@ int runPFB(char* inputData_h,
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
+	// Write out the map data.
+	char* g_pc2Data_h = (char*) malloc(mapSize);
+	CUDASafeCallWithCleanUp(cudaMemcpy(g_pc2Data_h ,g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
+	int file = 0;
+	
+	char outfile[256] = "map_out.dat\0";
+	file = open(outfile,
+					O_CREAT | O_TRUNC | O_WRONLY,
+					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(file < EXIT_SUCCESS) {
+		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
+		cleanUp();
+		resetDevice();
+		return EXIT_FAILURE;
+	}
+	(void) write(file, g_pc2Data_h,mapSize);
+
+
+	// Begin PFB
+
 	// p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
 	g_pc2DataRead_d = g_pc2Data_d;
 	int pfb_on = 1;
@@ -111,7 +131,7 @@ int runPFB(char* inputData_h,
 		++countFFT;
 
 		// copy data back to host.
-		int outDataSize = g_iNumSubBands * g_iNFFT * (2*sizeof(float));
+		int outDataSize = g_iNumSubBands * g_iNFFT * (sizeof(cufftComplex));
 		CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
 
 		//update output data pointer.
@@ -128,9 +148,20 @@ int runPFB(char* inputData_h,
 	}
 
 	cleanUp();
+	iRet = resetDevice();
 
 	return iRet;
 
+}
+
+int resetDevice() {
+	cudaError_t cuErr = cudaDeviceReset();
+	if (cuErr != cudaSuccess) {
+		fprintf(stderr, "Device Reset Failed.\n");
+
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }
 
 // return true or false upon successful setup.
@@ -352,6 +383,7 @@ __global__ void PFB_kernel(char2* pc2Data,
     {
         /* calculate the absolute index */
         iAbsIdx = (j * iNFFT) + i;
+
         /* get the address of the block */
         c2Data = pc2Data[iAbsIdx];
         
