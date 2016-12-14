@@ -79,29 +79,15 @@ int runPFB(char* inputData_h,
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
-	// Write out the map data.
-	char* g_pc2Data_h = (char*) malloc(mapSize);
-	CUDASafeCallWithCleanUp(cudaMemcpy(g_pc2Data_h ,g_pc2Data_d, mapSize, cudaMemcpyDeviceToHost));
-	int file = 0;
-	
-	char outfile[256] = "map_out.dat\0";
-	file = open(outfile,
-					O_CREAT | O_TRUNC | O_WRONLY,
-					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-	if(file < EXIT_SUCCESS) {
-		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
-		cleanUp();
-		resetDevice();
-		return EXIT_FAILURE;
-	}
-	(void) write(file, g_pc2Data_h,mapSize);
-
-
+	//Arrays for debugging the output structure.
+	float2* fftIn = NULL;
+	fftIn = (float2*) malloc(SAMPLES*PFB_CHANNELS*DEF_NUM_ELEMENTS*sizeof(float2));
+	memset(fftIn, 0, SAMPLES*PFB_CHANNELS*DEF_NUM_ELEMENTS*sizeof(float2));
 	// Begin PFB
 
 	// p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
 	g_pc2DataRead_d = g_pc2Data_d;
-	int pfb_on = 1;
+	int pfb_on = 0;
 	while(!g_IsProcDone){
 
 		if(pfb_on) {
@@ -119,6 +105,10 @@ int runPFB(char* inputData_h,
 			g_pc2DataRead_d += g_iNumSubBands * g_iNFFT;
 			++countCpyFFT;
 		}
+
+		//copy pre fft in data to compare output with straigh fft.
+		CUDASafeCallWithCleanUp(cudaMemcpy(fftIn, g_pf2FFTIn_d, g_iNumSubBands*g_iNFFT*sizeof(float2), cudaMemcpyDeviceToHost));
+		fftIn += g_iNumSubBands * g_iNFFT;
 
 		//FFT
 		iRet = doFFT();
@@ -146,6 +136,21 @@ int runPFB(char* inputData_h,
 		}
 
 	}
+	// reset pointer
+	fftIn -= g_iNumSubBands*g_iNFFT*117;
+	int file = 0;
+	
+	char outfile[256] = "prefft_out.dat\0";
+	file = open(outfile,
+					O_CREAT | O_TRUNC | O_WRONLY,
+					S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if(file < EXIT_SUCCESS) {
+		(void) fprintf(stderr, "ERROR: writing outfile failed\n");
+		cleanUp();
+		resetDevice();
+		return EXIT_FAILURE;
+	}
+	(void) write(file, fftIn, SAMPLES*PFB_CHANNELS*DEF_NUM_ELEMENTS*sizeof(float2));
 
 	cleanUp();
 	iRet = resetDevice();
