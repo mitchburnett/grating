@@ -69,13 +69,14 @@ if (1 == len(sys.argv)):
 
 # get the arguments using the getopt module
 try:
-    (Opts, Args) = getopt.getopt(sys.argv[1:], OptsShort, OptsLong)
+    (Opts, Args) = getopt.getopt(sys.argv[2:], OptsShort, OptsLong) # had to change, it became 2: when having data file. 
 except getopt.GetoptError, ErrMsg:
     # print usage information and exit
     sys.stderr.write("ERROR: " + str(ErrMsg) + "!\n")
     PrintUsage(ProgName)
     sys.exit(1)
 
+print Opts
 # parse the arguments
 for o, a in Opts:
     if o in ("-h", "--help"):

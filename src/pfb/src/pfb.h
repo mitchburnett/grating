@@ -15,6 +15,10 @@
 
 #include <float.h>		/* for FLT_MAX */
 
+#include <getopt.h>		/* for option parsing */
+
+#include <python2.7/Python.h> /* for executing coeff gen file */
+
 #define FALSE 					0
 #define TRUE  					1
 #define DEBUG					1
@@ -58,6 +62,8 @@ int doFFT();
 
 void cleanUp(void);
 int resetDevice(void);
+
+void genCoeff(int argc, char* argv[]);
 
 #define CUDASafeCallWithCleanUp(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
 

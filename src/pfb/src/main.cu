@@ -35,17 +35,43 @@ int loadData(char* f){
 
 int main(int argc, char *argv[]) {
 
-	// get data filename
 	int ret = EXIT_SUCCESS;
-	if(argc< 2) {
-		(void) fprintf(stderr, "ERROR: Data filename not specified.\n");
+
+	/* valid short and long options */
+	const char* const pcOptsShort = "hn:t:w:b:d:p";
+	const struct option stOptsLong[] = {
+		{ "help",		0, NULL,	'h' },   
+		{ "nfft", 		1, NULL,	'n' },
+		{ "taps",		1, NULL,	't' },
+		{ "window",		1, NULL,	'w' },
+		{ "nsub",		1, NULL,	'b' },
+		{ "datatype",	1, NULL,	'd' },
+		{ "plot",		0, NULL,	'p' },
+		{ NULL,			0, NULL, 	0	}
+	};
+
+	const char* ProgName = argv[0];
+	int argFlag = 0;
+
+	/* parse input */
+	int nextOpt = 0;
+
+	// no arguments presented
+	if(argc < optind) {
+		(void) fprintf(stderr, "Missing required arguments\n");
 		return EXIT_FAILURE;
 	}
 
+	// get data filename
 	char filename[256] = {0};
 	(void) strncpy(filename, argv[1], 256);
 	filename[255] = '\0';
 
+	// create coeff
+	genCoeff(argc, argv);
+
+	(void) fprintf(stdout, "Good Job!\n");
+	return 0;
 	// load data into memory
 	ret = loadData(filename);
 	if (ret == EXIT_FAILURE) {

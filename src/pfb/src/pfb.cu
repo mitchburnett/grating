@@ -169,6 +169,20 @@ int resetDevice() {
 	return EXIT_SUCCESS;
 }
 
+void genCoeff(int argc, char* argv[]) {
+	FILE* file;
+	char* fname = "../../../scripts/grating_gencoeff.py";
+
+	Py_SetProgramName(argv[0]);
+	Py_Initialize();
+	PySys_SetArgv(argc, argv);
+	file = fopen(fname, "r");
+	PyRun_SimpleFile(file, fname);
+	Py_Finalize();
+
+	return;
+}
+
 // return true or false upon successful setup.
 int loadCoeff(int iCudaDevice){
 
