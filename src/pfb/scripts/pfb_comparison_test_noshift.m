@@ -5,7 +5,7 @@ fs = 303e3; % 303 Khz
 totalChannels = 25;
 numEl = 64;
 subbands = totalChannels*numEl;
-nfft = 256;
+nfft = 32;
 ntaps = 8;
 
 % load data
@@ -67,10 +67,10 @@ for c = c_min:c_max
         % output to verify results
         spectra = zeros(windows,nfft);
         for n = 1:windows
-            S_re = fft(element_re((n-1)*nfft + 1: (nfft*ntaps) + nfft*(n-1)),nfft); % need to add the imag elements
-            S_im = fft(element_im((n-1)*nfft + 1: (nfft*ntaps) + nfft*(n-1)),nfft); % need to add the imag elements
+            S_re = fft(element_re((n-1)*nfft + 1: (nfft*ntaps) + nfft*(n-1)),nfft);
+            S_im = fft(element_im((n-1)*nfft + 1: (nfft*ntaps) + nfft*(n-1)),nfft);
             
-            spectra(n,:) = fftshift(abs(S_re + j*S_im).^2); % fftshift is important since it is plotting 0 - 2pi not -pi to pi
+            spectra(n,:) = abs(S_re + j*S_im).^2; % add a fftshift if you want to plot -pi to pi instead of 0 2pi
         end
         %average the spectra
         spectra = mean(spectra,1);
@@ -93,62 +93,59 @@ fineChannelBinWidth = coarseChannelBinWidth/nfft;
 
 ch = 0;
 absCh = ch+c_min;
-%faxis = linspace(absCh*coarseChannelBinWidth, (absCh+1)*coarseChannelBinWidth,nfft);
-%faxis = absCh*10:fineChannelBinWidth:(absCh+1)*10-fineChannelBinWidth;
+
 figure(2); clf;
-faxis = linspace(-fs_n/2, fs_n/2, nfft);
+faxis = 0:fs_n/nfft:fs_n-1/nfft;
 subplot(321);
 plot(faxis, 10*log10(CHANNELS(1+numEl*ch,:)+.0001)); grid on;
-title('Coarse Channel 1');
+title('Coarse Channel 1 - psudo-comparison'); % psudo because not verified it does the exact same number of operations as the pfb code (or that it is even doing a pfb operation).
 xlabel('Freq (Khz)');
 ylabel('Magnitude dB');
-xlim([-fs_n/2, fs_n/2]);
-set(gca, 'XTick', [-fs_n/2:25:fs_n/2]);
+xlim([0, fs_n]);
+set(gca, 'XTick', [0:14]*20 + 5);
 
 ch = 1;
 absCh = ch+c_min;
-%faxis = linspace(absCh*coarseChannelBinWidth, (absCh+1)*coarseChannelBinWidth,nfft);
-%faxis = absCh*10:fineChannelBinWidth:(absCh+1)*10-fineChannelBinWidth;
+
 subplot(322);
 plot(faxis, 10*log10(CHANNELS(1+numEl*ch,:)+.0001)); grid on;
 title('Coarse Channel 2');
 xlabel('Freq (Khz)');
 ylabel('Magnitude dB');
-xlim([-fs_n/2, fs_n/2]);
-set(gca, 'XTick', [-fs_n/2:25:fs_n/2]);
+xlim([0, fs_n]);
+set(gca, 'XTick', [0:14]*20 + 5);
+
 
 ch = 2;
 absCh = ch+c_min;
-%faxis = linspace(absCh*coarseChannelBinWidth, (absCh+1)*coarseChannelBinWidth,nfft);
-%faxis = absCh*10:fineChannelBinWidth:(absCh+1)*10-fineChannelBinWidth;
+
 subplot(323);
 plot(faxis, 10*log10(CHANNELS(1+numEl*ch,:)+.0001)); grid on;
 title('Coarse Channel 3');
 xlabel('Freq (Khz)');
 ylabel('Magnitude dB');
-xlim([-fs_n/2, fs_n/2]);
-set(gca, 'XTick', [-fs_n/2:25:fs_n/2]);
+xlim([0, fs_n]);
+set(gca, 'XTick', [0:14]*20 + 5);
 
 ch = 3;
 absCh = ch+c_min;
-%faxis = linspace(absCh*coarseChannelBinWidth, (absCh+1)*coarseChannelBinWidth,nfft);
-%faxis = absCh*10:fineChannelBinWidth:(absCh+1)*10-fineChannelBinWidth;
+
 subplot(324);
 plot(faxis, 10*log10(CHANNELS(1+numEl*ch,:)+.0001)); grid on;
 title('Coarse Channel 4');
 xlabel('Freq (Khz)');
 ylabel('Magnitude dB');
-xlim([-fs_n/2, fs_n/2]);
-set(gca, 'XTick', [-fs_n/2:25:fs_n/2]);
+xlim([0, fs_n]);
+set(gca, 'XTick', [0:14]*20 + 5);
+
 
 ch = 4;
 absCh = ch+c_min;
-%faxis = linspace(absCh*coarseChannelBinWidth, (absCh+1)*coarseChannelBinWidth,nfft);
-%faxis = absCh*10:fineChannelBinWidth:(absCh+1)*10-fineChannelBinWidth;
+
 subplot(325);
 plot(faxis, 10*log10(CHANNELS(1+numEl*ch,:)+.0001)); grid on;
 title('Coarse Channel 5');
 xlabel('Freq (Khz)');
 ylabel('Magnitude dB');
-xlim([-fs_n/2, fs_n/2]);
-set(gca, 'XTick', [-fs_n/2:25:fs_n/2]);
+xlim([0, fs_n]);
+set(gca, 'XTick', [0:14]*20 + 5);

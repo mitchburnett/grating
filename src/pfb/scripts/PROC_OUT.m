@@ -53,13 +53,13 @@ faxis = 0:fs/nfft:fs-1/nfft;
 el_data = CH((ch_idx-1)*numEl+1:ch_idx*numEl,:);
 el = el_data(el_idx, :);
 
-figure(2); clf;
+figure(4); clf;
 subplot(321);
 plot(faxis, 10*log10(el+.001)); grid on;
 xlim([min(faxis), max(faxis)]);
 xlabel('Frequency (kHz)');
 ylabel('Magnitude (dB)');
-title('Coarse Channel 1');
+title('Coarse Channel 1 - Processed output');
 set(gca, 'xtick', [0:14]*20 + 5);
 
 for i = 2:5
@@ -71,7 +71,7 @@ for i = 2:5
     xlim([min(faxis), max(faxis)]);
     xlabel('Frequency (kHz)');
     ylabel('Magnitude (dB)');
-    title(['coarse channel' num2str(i)]);
+    title(['coarse channel ' num2str(i)]);
     set(gca, 'xtick', [0:14]*20 + 5);
 end
 

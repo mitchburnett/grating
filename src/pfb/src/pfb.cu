@@ -87,7 +87,7 @@ int runPFB(char* inputData_h,
 
 	// p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
 	g_pc2DataRead_d = g_pc2Data_d;
-	int pfb_on = 0;
+	int pfb_on = 1;
 	while(!g_IsProcDone){
 
 		if(pfb_on) {
@@ -131,7 +131,7 @@ int runPFB(char* inputData_h,
 		lProcData += g_iNumSubBands * g_iNFFT;
 		(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
 		(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
-		if(lProcData == ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
+		if(lProcData > ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
 			g_IsProcDone = TRUE;
 		}
 
