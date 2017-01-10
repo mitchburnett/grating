@@ -4,6 +4,21 @@ char* g_inputData = NULL;
 //char* g_inputData_d = NULL;
 float2* g_outputData = NULL;
 
+// pfb param structure to setup pfb.
+// struct params {
+// 	int nfft;		// transform length
+// 	int taps;		// filter length of a polyphase decomposition
+// 	int subbands;	// number of subbands
+// 	int select;		// coarse channel selection
+// } pfbParams;
+
+struct params pfbParams;
+
+void printUsage() {
+	(void) fprintf(stdout, "USAGE STATEMENT...\n");
+	return;
+}
+
 int loadData(char* f){
 	int ret = EXIT_SUCCESS;
 	int file =  0;
@@ -38,7 +53,7 @@ int main(int argc, char *argv[]) {
 	int ret = EXIT_SUCCESS;
 
 	/* valid short and long options */
-	const char* const pcOptsShort = "hn:t:w:b:d:p";
+	const char* const pcOptsShort = ":hn:t:w:b:d:s:p";
 	const struct option stOptsLong[] = {
 		{ "help",		0, NULL,	'h' },   
 		{ "nfft", 		1, NULL,	'n' },
@@ -46,43 +61,115 @@ int main(int argc, char *argv[]) {
 		{ "window",		1, NULL,	'w' },
 		{ "nsub",		1, NULL,	'b' },
 		{ "datatype",	1, NULL,	'd' },
+		{ "select",		1, NULL,	's' },
 		{ "plot",		0, NULL,	'p' },
 		{ NULL,			0, NULL, 	0	}
 	};
 
 	const char* ProgName = argv[0];
-	int argFlag = 0;
+	int errFlag = 0;
 
 	/* parse input */
-	int nextOpt = 0;
+	int opt = 0; //
+	int prevInd = 0; // used to track optind to manual check missing arguments.
+	do {
 
-	// no arguments presented
-	if(argc < optind) {
-		(void) fprintf(stderr, "Missing required arguments\n");
+		/* 
+			Getopt will load the next option if the argument is missing, getopt's ':' error check
+			really only works on the last option. This assumes that no argument has a '-' in it.
+		*/
+
+		prevInd = optind;
+		opt = getopt_long(argc, argv, pcOptsShort, stOptsLong, NULL);
+
+		if(optind == prevInd + 2 && *optarg == '-' || *optarg == '.') { // assumes arguments cannot start with '-' or '.'
+			optopt = opt; // update getopt's optopt variable to contain the violating variable. 
+			opt = ':'; // trigger the error character.
+			--optind; // decrement optind since it was incremented incorrectly.
+		}
+
+		switch(opt)
+		{
+			case 'h':
+				printUsage();
+				return EXIT_SUCCESS;
+
+			case 'n':
+				pfbParams.nfft = (int) atoi(optarg);
+				break;
+
+			case 't':
+				pfbParams.taps = (int) atoi(optarg);
+				break;
+
+			case 'w':
+				break;
+
+			case 'b':
+				pfbParams.subbands =  (int) atoi(optarg);
+				break;
+
+			case 'd':
+				break;
+
+			case 's':
+				pfbParams.select = (int) atoi(optarg);
+				break;
+
+			case 'p':
+				break;
+
+			case ':':
+				(void) fprintf(stderr, "-%c option requires a parameter.\n", optopt);
+				errFlag++;
+				return EXIT_FAILURE;
+
+			case '?':
+				(void) fprintf(stderr, "Unrecognized option -%c.\n", optopt);
+				errFlag++;
+				break;
+
+			case -1: /* done with options */
+				break;
+
+			default: /* unexpected */
+				assert(0);
+		}
+	} while (opt != -1);
+
+	if(errFlag) {
+		printUsage();
+		return EXIT_FAILURE;
+	}
+
+	// no data file presented
+	if(argc <= optind) {
+		(void) fprintf(stderr, "ERROR: Missing data file.\n");
 		return EXIT_FAILURE;
 	}
 
 	// get data filename
 	char filename[256] = {0};
-	(void) strncpy(filename, argv[1], 256);
+	(void) strncpy(filename, argv[optind], 256);
 	filename[255] = '\0';
 
-	// create coeff
-	genCoeff(argc, argv);
-
-	(void) fprintf(stdout, "Good Job!\n");
-	return 0;
 	// load data into memory
 	ret = loadData(filename);
 	if (ret == EXIT_FAILURE) {
 		return EXIT_FAILURE;
 	}
 
-	// init cuda device
+	/* init cuda device */
 	int iCudaDevice = DEF_CUDA_DEVICE;
+
+	// create coeff
+	genCoeff(argc, argv);
+
+	// init the device, loads coeff
 	ret = loadCoeff(iCudaDevice);
 
 	// malloc data arrays
+
 	//int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
 
@@ -91,7 +178,7 @@ int main(int argc, char *argv[]) {
 
 	// start pfb function
 	int select = 0;
-	ret = runPFB(g_inputData, g_outputData, select);
+	ret = runPFB(g_inputData, g_outputData, pfbParams);
 	if (ret == EXIT_FAILURE) {
 		(void) fprintf(stderr, "ERROR: runPFB failed!\n");
 		free(g_inputData);

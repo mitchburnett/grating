@@ -169,9 +169,11 @@ int resetDevice() {
 	return EXIT_SUCCESS;
 }
 
+// make a call to execute a ptyhon program.
 void genCoeff(int argc, char* argv[]) {
+
 	FILE* file;
-	char* fname = "../../../scripts/grating_gencoeff.py";
+	char fname[256] = {"../../../scripts/grating_gencoeff.py"};
 
 	Py_SetProgramName(argv[0]);
 	Py_Initialize();
