@@ -12,10 +12,17 @@ float2* g_outputData = NULL;
 // 	int select;		// coarse channel selection
 // } pfbParams;
 
-struct params pfbParams;
+params pfbParams;
 
-void printUsage() {
-	(void) fprintf(stdout, "USAGE STATEMENT...\n");
+void printUsage(const char* progName) {
+	(void) printf("Usage: %s [options] <data-file>\n",
+                  progName);
+    (void) printf("    -h  --help                           ");
+    (void) printf("Display this usage information\n");
+    (void) printf("    -b  --nsub                           ");
+    (void) printf("Number of sub-bands in the data\n");
+    (void) printf("    -n  --nfft <value>                   ");
+    (void) printf("Number of points in FFT\n");
 	return;
 }
 
@@ -66,23 +73,22 @@ int main(int argc, char *argv[]) {
 		{ NULL,			0, NULL, 	0	}
 	};
 
-	const char* ProgName = argv[0];
+	const char* progName = argv[0];
+
 	int errFlag = 0;
 
 	/* parse input */
 	int opt = 0; //
 	int prevInd = 0; // used to track optind to manual check missing arguments.
 	do {
-
 		/* 
 			Getopt will load the next option if the argument is missing, getopt's ':' error check
 			really only works on the last option. This assumes that no argument has a '-' in it.
 		*/
-
 		prevInd = optind;
 		opt = getopt_long(argc, argv, pcOptsShort, stOptsLong, NULL);
 
-		if(optind == prevInd + 2 && *optarg == '-' || *optarg == '.') { // assumes arguments cannot start with '-' or '.'
+		if(optind == prevInd + 2 && (*optarg == '-' || *optarg == '.')) { // assumes arguments cannot start with '-' or '.'. Also, if optarg is null this causes a seg fault and the first logical comparisson catches the null case. The parans for the or helps not cause the fault.
 			optopt = opt; // update getopt's optopt variable to contain the violating variable. 
 			opt = ':'; // trigger the error character.
 			--optind; // decrement optind since it was incremented incorrectly.
@@ -91,7 +97,7 @@ int main(int argc, char *argv[]) {
 		switch(opt)
 		{
 			case 'h':
-				printUsage();
+				printUsage(progName);
 				return EXIT_SUCCESS;
 
 			case 'n':
@@ -114,6 +120,11 @@ int main(int argc, char *argv[]) {
 
 			case 's':
 				pfbParams.select = (int) atoi(optarg);
+				// check valid select range.
+				if(pfbParams.select < 0 || pfbParams.select > 4) {
+					(void) fprintf(stderr, "ERROR: Channel select range [0, 4]\n");
+					errFlag++;
+				}
 				break;
 
 			case 'p':
@@ -122,7 +133,7 @@ int main(int argc, char *argv[]) {
 			case ':':
 				(void) fprintf(stderr, "-%c option requires a parameter.\n", optopt);
 				errFlag++;
-				return EXIT_FAILURE;
+				break;
 
 			case '?':
 				(void) fprintf(stderr, "Unrecognized option -%c.\n", optopt);
@@ -138,7 +149,7 @@ int main(int argc, char *argv[]) {
 	} while (opt != -1);
 
 	if(errFlag) {
-		printUsage();
+		printUsage(progName);
 		return EXIT_FAILURE;
 	}
 
@@ -166,7 +177,7 @@ int main(int argc, char *argv[]) {
 	genCoeff(argc, argv);
 
 	// init the device, loads coeff
-	ret = loadCoeff(iCudaDevice);
+	ret = initPFB(iCudaDevice, pfbParams);
 
 	// malloc data arrays
 
@@ -177,7 +188,6 @@ int main(int argc, char *argv[]) {
 	memset(g_outputData, 0, outputSize);
 
 	// start pfb function
-	int select = 0;
 	ret = runPFB(g_inputData, g_outputData, pfbParams);
 	if (ret == EXIT_FAILURE) {
 		(void) fprintf(stderr, "ERROR: runPFB failed!\n");

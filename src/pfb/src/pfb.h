@@ -48,7 +48,7 @@
 
 typedef unsigned char BYTE;
 
-struct params{
+struct params {
 	int nfft;
 	int taps;
 	int subbands;
@@ -57,7 +57,7 @@ struct params{
 
 
 // methods
-int loadCoeff(int iCudaDevice);
+int initPFB(int iCudaDevice, params pfbParams);
 int runPFB(char* inputData_h, float2* outputData_h, params pfbParams);
 //int loadDataToMem(void);
 //int ReadData(void);

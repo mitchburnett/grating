@@ -2,14 +2,6 @@
 
 /*
 
-dim3 g_dimBAccum(1, 1, 1);
-dim3 g_dimGAccum(1, 1);
-
-float4* g_pf4SumStokes = NULL;
-float4* g_pf4SumStokes_d = NULL;
-
-char g_acFileData[256] = {0}; // File data to load and process. If this is a function data is an input.
-
 int g_iNumSubBands = DEF_NUM_SUBBANDS;
 */
 
@@ -52,7 +44,9 @@ char* g_pcInputData_d = NULL;
 
 int runPFB(char* inputData_h,
 		   float2* outputData_h,
-		   int channelSelect) {
+		   params pfbParams) {
+
+	int channelSelect = pfbParams.select;
 
 	//process variables
 	int iRet = EXIT_SUCCESS;
@@ -175,9 +169,22 @@ void genCoeff(int argc, char* argv[]) {
 	FILE* file;
 	char fname[256] = {"../../../scripts/grating_gencoeff.py"};
 
+	// remove "-s" from argv
+	int newArgc = 0;
+	char* newArgv[30] = {};
+	int i = 0;
+	for(i = 0; i < argc; i++){
+		if(strncmp(argv[i],"-s",2) == 0){
+			i++;
+		} else {
+			newArgv[newArgc] = argv[i];
+			newArgc++;		}
+	}
+
+	// initalize and run python script
 	Py_SetProgramName(argv[0]);
 	Py_Initialize();
-	PySys_SetArgv(argc, argv);
+	PySys_SetArgv(newArgc, newArgv);
 	file = fopen(fname, "r");
 	PyRun_SimpleFile(file, fname);
 	Py_Finalize();
@@ -186,9 +193,12 @@ void genCoeff(int argc, char* argv[]) {
 }
 
 // return true or false upon successful setup.
-int loadCoeff(int iCudaDevice){
+int initPFB(int iCudaDevice, params pfbParams){
 
 	int iRet = EXIT_SUCCESS;
+
+	g_iNFFT = pfbParams.nfft;
+	g_iNTaps = pfbParams.taps;
 
 	int iDevCount = 0;
 	cudaDeviceProp stDevProp = {0};
