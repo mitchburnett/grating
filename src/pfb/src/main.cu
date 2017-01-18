@@ -1,10 +1,11 @@
 #include "pfb.h"
 
+#define DEFAULT_PFB_PARAMS {32, 8, 320, 8};
 char* g_inputData = NULL;
 //char* g_inputData_d = NULL;
 float2* g_outputData = NULL;
 
-// pfb param structure to setup pfb.
+// pfbpfb param structure to setup pfb.
 // struct params {
 // 	int nfft;		// transform length
 // 	int taps;		// filter length of a polyphase decomposition
@@ -12,7 +13,7 @@ float2* g_outputData = NULL;
 // 	int select;		// coarse channel selection
 // } pfbParams;
 
-params pfbParams;
+params pfbParams = DEFAULT_PFB_PARAMS;
 
 void printUsage(const char* progName) {
 	(void) printf("Usage: %s [options] <data-file>\n",
@@ -57,6 +58,7 @@ int loadData(char* f){
 
 int main(int argc, char *argv[]) {
 
+	pfbParams.nfft = 32;
 	int ret = EXIT_SUCCESS;
 
 	/* valid short and long options */
@@ -109,6 +111,7 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case 'w':
+				pfbParams.window = optarg;
 				break;
 
 			case 'b':
@@ -116,6 +119,7 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case 'd':
+				pfbParams.dataType = optarg;
 				break;
 
 			case 's':
@@ -128,6 +132,7 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case 'p':
+				pfbParams.plot = 1;
 				break;
 
 			case ':':
@@ -173,9 +178,10 @@ int main(int argc, char *argv[]) {
 	/* init cuda device */
 	int iCudaDevice = DEF_CUDA_DEVICE;
 
-	// create coeff
-	genCoeff(argc, argv);
-
+	// create coeff and write to a file that is read in initPFB.
+	genCoeff(argc, argv, pfbParams);
+	(void) fprintf(stdout, "Good job!\n");
+	return 0;
 	// init the device, loads coeff
 	ret = initPFB(iCudaDevice, pfbParams);
 

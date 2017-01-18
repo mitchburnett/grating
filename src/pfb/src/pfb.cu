@@ -153,38 +153,54 @@ int runPFB(char* inputData_h,
 
 }
 
-int resetDevice() {
-	cudaError_t cuErr = cudaDeviceReset();
-	if (cuErr != cudaSuccess) {
-		fprintf(stderr, "Device Reset Failed.\n");
-
-		return EXIT_FAILURE;
-	}
-	return EXIT_SUCCESS;
-}
-
 // make a call to execute a ptyhon program.
-void genCoeff(int argc, char* argv[]) {
-
+void genCoeff(int argc, char* argv[], params pfbParams) {
+	(void) fprintf(stdout, "Argc: %i\n", argc);
+	int k = 0;
+	for (k=0; k < argc; k++) {
+		(void) fprintf(stdout, "%s\n", argv[k]);
+	}
 	FILE* file;
 	char fname[256] = {"../../../scripts/grating_gencoeff.py"};
 
-	// remove "-s" from argv
-	int newArgc = 0;
-	char* newArgv[30] = {};
-	int i = 0;
-	for(i = 0; i < argc; i++){
-		if(strncmp(argv[i],"-s",2) == 0){
-			i++;
-		} else {
-			newArgv[newArgc] = argv[i];
-			newArgc++;		}
+	int argCount = 5;
+	char* arguments[32] = {};
+	char temp[256] = {};
+	arguments[0] = argv[0];
+	
+	arguments[1] = "-n";
+	sprintf(temp, "%d", pfbParams.nfft);
+	arguments[2] = temp;
+
+	arguments[3] = "-t";
+	sprintf(temp, "%d", pfbParams.taps);
+	arguments[4] = temp;
+
+	arguments[5] = "-w";
+	fprintf(stdout, "Window type is: %s\n", pfbParams.window);
+	arguments[6] = pfbParams.window;
+	fprintf(stdout, "Window type is: %s\n", arguments[6]);
+
+	arguments[7] = "-b";
+	sprintf(temp, "%d", pfbParams.subbands);
+	arguments[8] = temp;
+
+	arguments[9] = "-d";
+	arguments[10] = pfbParams.dataType;
+
+	if(pfbParams.plot) {
+		arguments[11] = "-p";
+		argCount++;
+	}
+
+	for (k=0; k < 2*argCount; k++) {
+		(void) fprintf(stdout, "%s\n", arguments[k]);
 	}
 
 	// initalize and run python script
 	Py_SetProgramName(argv[0]);
 	Py_Initialize();
-	PySys_SetArgv(newArgc, newArgv);
+	PySys_SetArgv(2*argCount, arguments);
 	file = fopen(fname, "r");
 	PyRun_SimpleFile(file, fname);
 	Py_Finalize();
@@ -197,6 +213,7 @@ int initPFB(int iCudaDevice, params pfbParams){
 
 	int iRet = EXIT_SUCCESS;
 
+	// set pfb params from input parameters.
 	g_iNFFT = pfbParams.nfft;
 	g_iNTaps = pfbParams.taps;
 
@@ -381,6 +398,16 @@ int initPFB(int iCudaDevice, params pfbParams){
 	fprintf(stdout, "\nDevice for PFB successfully initialized!\n");
 	return EXIT_SUCCESS;
 
+}
+
+int resetDevice() {
+	cudaError_t cuErr = cudaDeviceReset();
+	if (cuErr != cudaSuccess) {
+		fprintf(stderr, "Device Reset Failed.\n");
+
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }
 
 __global__ void map(char* dataIn,

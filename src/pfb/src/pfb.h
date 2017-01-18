@@ -48,12 +48,16 @@
 
 typedef unsigned char BYTE;
 
-struct params {
+// stuct of parameters for PFB. Values indicate default values.
+typedef struct {
 	int nfft;
 	int taps;
 	int subbands;
 	int select;
-};
+	char* window;
+	char* dataType;
+	int plot;
+} params;
 
 
 // methods
@@ -71,7 +75,7 @@ int doFFT();
 void cleanUp(void);
 int resetDevice(void);
 
-void genCoeff(int argc, char* argv[]);
+void genCoeff(int argc, char* argv[], params pfbParams);
 
 #define CUDASafeCallWithCleanUp(iRet) __CUDASafeCallWithCleanUp(iRet, __FILE__, __LINE__, &cleanUp)
 
