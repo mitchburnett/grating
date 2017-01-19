@@ -155,52 +155,59 @@ int runPFB(char* inputData_h,
 
 // make a call to execute a ptyhon program.
 void genCoeff(int argc, char* argv[], params pfbParams) {
-	(void) fprintf(stdout, "Argc: %i\n", argc);
-	int k = 0;
-	for (k=0; k < argc; k++) {
-		(void) fprintf(stdout, "%s\n", argv[k]);
-	}
+
 	FILE* file;
 	char fname[256] = {"../../../scripts/grating_gencoeff.py"};
 
-	int argCount = 5;
-	char* arguments[32] = {};
+	int argCount = 10;
+	char arguments[11][256];
 	char temp[256] = {};
 	arguments[0] = argv[0];
 	
 	arguments[1] = "-n";
 	sprintf(temp, "%d", pfbParams.nfft);
-	arguments[2] = temp;
+	strncpy(arguments[2], temp, sizeof(temp));
+
+	fprintf(stdout, "%s %s\n", arguments[1], arguments[2]);
 
 	arguments[3] = "-t";
 	sprintf(temp, "%d", pfbParams.taps);
 	arguments[4] = temp;
 
+	fprintf(stdout, "%s %s %s %s\n", arguments[1], arguments[2], arguments[3], arguments[4]);
+
 	arguments[5] = "-w";
-	fprintf(stdout, "Window type is: %s\n", pfbParams.window);
 	arguments[6] = pfbParams.window;
-	fprintf(stdout, "Window type is: %s\n", arguments[6]);
+
+	fprintf(stdout, "%s %s\n", arguments[5], arguments[6]);
 
 	arguments[7] = "-b";
 	sprintf(temp, "%d", pfbParams.subbands);
 	arguments[8] = temp;
 
+	fprintf(stdout, "%s %s\n", arguments[7], arguments[8]);
+
 	arguments[9] = "-d";
 	arguments[10] = pfbParams.dataType;
 
+	fprintf(stdout, "%s %s\n\n", arguments[9], arguments[10]);
+
 	if(pfbParams.plot) {
+		fprintf(stdout, "Adding plot...\n");
 		arguments[11] = "-p";
 		argCount++;
 	}
-
-	for (k=0; k < 2*argCount; k++) {
-		(void) fprintf(stdout, "%s\n", arguments[k]);
+	fprintf(stdout, "%s %s\n", arguments[1], arguments[2]);
+	int k = 0;
+	fprintf(stdout, "arg count: %d\n", argCount);
+	for (k=0; k <= argCount; k++) {
+		(void) fprintf(stdout, "k:%d %s\n", k, arguments[k]);
 	}
 
 	// initalize and run python script
 	Py_SetProgramName(argv[0]);
 	Py_Initialize();
-	PySys_SetArgv(2*argCount, arguments);
+	PySys_SetArgv(argCount, arguments);
 	file = fopen(fname, "r");
 	PyRun_SimpleFile(file, fname);
 	Py_Finalize();
