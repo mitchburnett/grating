@@ -58,7 +58,6 @@ int loadData(char* f){
 
 int main(int argc, char *argv[]) {
 
-	pfbParams.nfft = 32;
 	int ret = EXIT_SUCCESS;
 
 	/* valid short and long options */
@@ -132,7 +131,7 @@ int main(int argc, char *argv[]) {
 				break;
 
 			case 'p':
-				pfbParams.plot = 1;
+				pfbParams.plot = 0;
 				break;
 
 			case ':':
@@ -180,8 +179,7 @@ int main(int argc, char *argv[]) {
 
 	// create coeff and write to a file that is read in initPFB.
 	genCoeff(argc, argv, pfbParams);
-	(void) fprintf(stdout, "Good job!\n");
-	return 0;
+
 	// init the device, loads coeff
 	ret = initPFB(iCudaDevice, pfbParams);
 

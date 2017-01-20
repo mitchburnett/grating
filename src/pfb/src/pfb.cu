@@ -189,7 +189,7 @@ void genCoeff(int argc, char* argv[], params pfbParams) {
 	}
 
 	for(i = 0; i < argCount; i++){
-		fprintf(stdout, " %s", arguments[i]);
+		fprintf(stdout, " %s", arguments[i]); // Add a gen coeff output for feedback.c
 	}
 	fprintf(stdout, "\n");
 

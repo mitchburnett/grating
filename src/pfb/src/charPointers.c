@@ -20,6 +20,13 @@ int main() {
 
 	(void) fprintf(stdout, "Hello!\n");
 
+	// char stackChars[2][7] = {"hello", "hi"}; // Could have also done that this way. As I understand it, this creates variables on the stack insted of malloc on the heap.
+
+	// char* ptrPtr = stackChars[0];
+	// ptrPtr++;
+
+	// fprintf(stderr, "%s %s\n", stackChars[0], ptrPtr);
+
 	char* progName = "./runPFB";
 	int argCount = 11;
 	if(pfbParams.plot) {
