@@ -159,50 +159,39 @@ void genCoeff(int argc, char* argv[], params pfbParams) {
 	FILE* file;
 	char fname[256] = {"../../../scripts/grating_gencoeff.py"};
 
-	int argCount = 10;
-	char arguments[11][256];
-	char temp[256] = {};
+	int argCount = 11;
+	char* arguments[32] = {}; // come back and create a dynamic structure, i.e definetly do not need 32, always 10 or 11.
+	int i = 0;
+	for(i = 0; i < 32; i++) {
+		arguments[i] = (char*) malloc(256*sizeof(char*));
+	}
+
 	arguments[0] = argv[0];
-	
-	arguments[1] = "-n";
-	sprintf(temp, "%d", pfbParams.nfft);
-	strncpy(arguments[2], temp, sizeof(temp));
 
-	fprintf(stdout, "%s %s\n", arguments[1], arguments[2]);
+	arguments[1] = (char*) "-n\0"; // (char*) acknowledges that I am assigning a const literal to a mutable and removes compile warnings for now.
+	sprintf(arguments[2], "%d", pfbParams.nfft);
 
-	arguments[3] = "-t";
-	sprintf(temp, "%d", pfbParams.taps);
-	arguments[4] = temp;
+	arguments[3] = (char*) "-t\0";
+	sprintf(arguments[4], "%d", pfbParams.taps);
 
-	fprintf(stdout, "%s %s %s %s\n", arguments[1], arguments[2], arguments[3], arguments[4]);
+	arguments[5] = (char*) "-b\0";
+	sprintf(arguments[6], "%d", pfbParams.subbands);
 
-	arguments[5] = "-w";
-	arguments[6] = pfbParams.window;
+	arguments[7] = (char*) "-w\0";
+	sprintf(arguments[8], "%s", pfbParams.window);
 
-	fprintf(stdout, "%s %s\n", arguments[5], arguments[6]);
-
-	arguments[7] = "-b";
-	sprintf(temp, "%d", pfbParams.subbands);
-	arguments[8] = temp;
-
-	fprintf(stdout, "%s %s\n", arguments[7], arguments[8]);
-
-	arguments[9] = "-d";
-	arguments[10] = pfbParams.dataType;
-
-	fprintf(stdout, "%s %s\n\n", arguments[9], arguments[10]);
+	arguments[9] = (char*) "-d\0";
+	sprintf(arguments[10], "%s", pfbParams.dataType);
 
 	if(pfbParams.plot) {
-		fprintf(stdout, "Adding plot...\n");
-		arguments[11] = "-p";
+		arguments[11] = (char*) "-p\0";
 		argCount++;
 	}
-	fprintf(stdout, "%s %s\n", arguments[1], arguments[2]);
-	int k = 0;
-	fprintf(stdout, "arg count: %d\n", argCount);
-	for (k=0; k <= argCount; k++) {
-		(void) fprintf(stdout, "k:%d %s\n", k, arguments[k]);
+
+	for(i = 0; i < argCount; i++){
+		fprintf(stdout, " %s", arguments[i]);
 	}
+	fprintf(stdout, "\n");
 
 	// initalize and run python script
 	Py_SetProgramName(argv[0]);

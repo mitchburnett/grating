@@ -1,6 +1,6 @@
 #include "pfb.h"
 
-#define DEFAULT_PFB_PARAMS {32, 8, 320, 0, "hanning\0", "float\0", 1};
+#define DEFAULT_PFB_PARAMS {32, 8, 320, 0, (char*)"hanning\0", (char*)"float\0", 1};
 char* g_inputData = NULL;
 //char* g_inputData_d = NULL;
 float2* g_outputData = NULL;
