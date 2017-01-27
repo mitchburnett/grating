@@ -49,6 +49,8 @@
 typedef unsigned char BYTE;
 
 // stuct of parameters for PFB. Values indicate default values.
+#define DEFAULT_PFB_PARAMS {32, 8, 320, 0, (char*)"hanning\0", (char*)"float\0", 1};
+// plot 1 mean to hide the plot of the filter before continuing.
 typedef struct {
 	int nfft;
 	int taps;

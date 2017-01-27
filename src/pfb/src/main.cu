@@ -1,60 +1,18 @@
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "helper.h"
+#ifdef __cplusplus
+}
+
+#endif
 #include "pfb.h"
 
-#define DEFAULT_PFB_PARAMS {32, 8, 320, 0, (char*)"hanning\0", (char*)"float\0", 1};
 char* g_inputData = NULL;
-//char* g_inputData_d = NULL;
 float2* g_outputData = NULL;
 
-// pfbpfb param structure to setup pfb.
-// struct params {
-// 	int nfft;		// transform length
-// 	int taps;		// filter length of a polyphase decomposition
-// 	int subbands;	// number of subbands
-// 	int select;		// coarse channel selection
-// } pfbParams;
-
 params pfbParams = DEFAULT_PFB_PARAMS;
-
-void printUsage(const char* progName) {
-	(void) printf("Usage: %s [options] <data-file>\n",
-                  progName);
-    (void) printf("    -h  --help                           ");
-    (void) printf("Display this usage information\n");
-    (void) printf("    -b  --nsub                           ");
-    (void) printf("Number of sub-bands in the data\n");
-    (void) printf("    -n  --nfft <value>                   ");
-    (void) printf("Number of points in FFT\n");
-	return;
-}
-
-int loadData(char* f){
-	int ret = EXIT_SUCCESS;
-	int file =  0;
-
-	int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	g_inputData = (char*) malloc(readSize);
-	if(NULL == g_inputData) {
-		(void) fprintf(stderr, "ERROR: Memory allocation failed! %s.\n", strerror(errno));
-		return EXIT_FAILURE;
-	}
-
-	file = open(f, O_RDONLY);
-	if (file < EXIT_SUCCESS) {
-		(void) fprintf(stderr, "ERROR: failed to open data file. %s\n", strerror(errno));
-		return EXIT_FAILURE;
-	}
-
-	ret = read(file, g_inputData, readSize);
-	if (ret < EXIT_SUCCESS) {
-		(void) fprintf(stderr, "ERROR: failed to read data file. %s\n", strerror(errno));
-		(void) close(file);
-		return EXIT_FAILURE;
-	}
-
-	(void) close(file);
-	return EXIT_SUCCESS;
-
-}
 
 int main(int argc, char *argv[]) {
 
@@ -169,7 +127,9 @@ int main(int argc, char *argv[]) {
 	filename[255] = '\0';
 
 	// load data into memory
-	ret = loadData(filename);
+	int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	g_inputData = (char*) malloc(readSize);
+	ret = loadData(filename, g_inputData);
 	if (ret == EXIT_FAILURE) {
 		return EXIT_FAILURE;
 	}
