@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
     }
     
     signed char toWrite[256*4] = {};
-    for(i=0; i < 256; i++) {
-        for(j=0; j<256; j++) {
+    for(i=0; i < 256; i++) { // 256 frequency
+        for(j=0; j<256; j++) { // samples
             cDataReX = SCALE_FACTOR*(0.1*cos(2*M_PI *afFreqX[i] * j /F_S));
             cDataImX = SCALE_FACTOR*(0.1*sin(2*M_PI *afFreqX[i] * j /F_S));
         
