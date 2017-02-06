@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 
 #include <stdlib.h>
@@ -15,8 +14,8 @@
 
 #define LEN_GENSTRING 256
 #define SCALE_FACTOR  127
-#define F_S		      303.0 // KHz
-#define N			  4000  // Time samples
+#define F_S		      256.0 // MHz
+#define N			  256  // Time samples
 #define CHANNELS	  25    // Freq Channels
 #define NUM_EL		  64    // Antenna Elements
 
@@ -41,57 +40,40 @@ int main(int argc, char *argv[]) {
 	}
 
 	int i = 0;
-
-	//generate freq array of
-	int channelBandgap = 10.0;		// KHz jumps
-	float freq[CHANNELS] = {};
-	for(i = 0; i <= CHANNELS; i++) {
-		freq[i] = channelBandgap * i + 5.0;
-	}
-
+    //Generate freq array.
+    float freq[256] = {};
+    for(i = 1; i <= 256; i++) {
+        freq[i-1] = i*1.0;
+    }
+    int f = 0;
 	int n = 0;
-	int f = 0;
+	int c = 0;
 	int e = 0;
  
-	signed char cDataReX = 0;
-	signed char cDataImY = 0;
-	signed char toWrite[NUM_EL*CHANNELS*(2*sizeof(char))] = {};
-	int size = NUM_EL*CHANNELS*(2*sizeof(char));
-	for(n = 0; n < N; n++) {
-		for(f = 0; f < CHANNELS; f++) {
+	signed char cDataRe = 0;
+	signed char cDataIm = 0;
+	signed char toWrite[N*CHANNELS*NUM_EL*(2*sizeof(char))] = {};
 
-<<<<<<< HEAD
-			//if(f==5){ // only insert one tone
-=======
-			//if(f==0){ // only insert one tone
->>>>>>> 8a32589d39e839728f5af9c3b62f3dfb6b035dbf
+	for(f = 0; f < 256; f++) {
+		for(n = 0; n < N; n++) {
 
-				//use the same sample for all elements
-				cDataReX = SCALE_FACTOR * (.1 * cos(2*M_PI * freq[f] * n / F_S));
-				cDataImY = SCALE_FACTOR * (.1 * sin(2*M_PI * freq[f] * n / F_S));
+				cDataRe = SCALE_FACTOR * (0.1 * cos(2*M_PI * freq[f] * n / F_S));
+				cDataIm = SCALE_FACTOR * (0.1 * sin(2*M_PI * freq[f] * n / F_S));
+
+			for(c = 0; c < CHANNELS; c++) {
 				for(e = 0; e < 2*NUM_EL; e++) {
 					
-					int idx = e + f * (2 * NUM_EL);
+					int idx = e + c * (2 * NUM_EL);
 					if( !(e%2) ) {
 					//create interleaved samples for real and Im 
-					toWrite[idx] = cDataReX;
+					toWrite[idx] = cDataRe;
 					} else {
-					toWrite[idx] = cDataImY;
+					toWrite[idx] = cDataIm;
 					}
 				}
-<<<<<<< HEAD
-			//} else {
-			//	cDataReX = 0;
-			//	cDataImY = 0;
-			//}
-=======
-			// } else {
-			// 	cDataReX = 0;
-			// 	cDataImY = 0;
-			// }
->>>>>>> 8a32589d39e839728f5af9c3b62f3dfb6b035dbf
+			}
 		}
-		(void) write(iFile, toWrite, NUM_EL*CHANNELS*(2*sizeof(char)));
+		(void) write(iFile, toWrite, N*CHANNELS*NUM_EL*(2*sizeof(char)));
 	}
 
 	(void) close(iFile);
