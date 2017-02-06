@@ -57,6 +57,7 @@ figure(4); clf;
 subplot(321);
 plot(faxis, 10*log10(el+.001)); grid on;
 xlim([min(faxis), max(faxis)]);
+ylim([-5, 80]);
 xlabel('Frequency (kHz)');
 ylabel('Magnitude (dB)');
 title('Coarse Channel 1 - Processed output');
@@ -71,6 +72,7 @@ for i = 2:5
     xlim([min(faxis), max(faxis)]);
     xlabel('Frequency (kHz)');
     ylabel('Magnitude (dB)');
+    ylim([-5, 80]);
     title(['coarse channel ' num2str(i)]);
     set(gca, 'xtick', [0:14]*20 + 5);
 end

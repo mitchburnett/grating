@@ -388,9 +388,7 @@ int main(int argc, char *argv[])
         /* if time to read from input buffer */
         iProcData += (g_iNumSubBands * g_iNFFT * sizeof(char4));
         lProcDataAll += (g_iNumSubBands * g_iNFFT * sizeof(char4));
-        if ((g_iSizeRead
-             - ((g_iNTaps - 1) * g_iNumSubBands * g_iNFFT * sizeof(char4)))
-            == iProcData)
+        if ((g_iSizeRead - ((g_iNTaps - 1) * g_iNumSubBands * g_iNFFT * sizeof(char4))) == iProcData)
         {
             if (!(g_iIsDataReadDone))
             {

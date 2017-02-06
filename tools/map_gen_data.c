@@ -42,11 +42,11 @@ int main(int argc, char *argv[]) {
 
 	int i = 0;
 
-	// generate freq array of
-	int channelBandgap = 10;		// KHz jumps
+	//generate freq array of
+	int channelBandgap = 10.0;		// KHz jumps
 	float freq[CHANNELS] = {};
 	for(i = 0; i <= CHANNELS; i++) {
-		freq[i] = channelBandgap * i + 5;
+		freq[i] = channelBandgap * i + 5.0;
 	}
 
 	int n = 0;
@@ -60,11 +60,11 @@ int main(int argc, char *argv[]) {
 	for(n = 0; n < N; n++) {
 		for(f = 0; f < CHANNELS; f++) {
 
-			if(f==0){ // only insert one tone
+			//if(f==5){ // only insert one tone
 
 				//use the same sample for all elements
-				cDataReX = SCALE_FACTOR * (0.1 * cos(2*M_PI * freq[f] * n / F_S));
-				cDataImY = SCALE_FACTOR * (0.1 * sin(2*M_PI * freq[f] * n / F_S));
+				cDataReX = SCALE_FACTOR * (.1 * cos(2*M_PI * freq[f] * n / F_S));
+				cDataImY = SCALE_FACTOR * (.1 * sin(2*M_PI * freq[f] * n / F_S));
 				for(e = 0; e < 2*NUM_EL; e++) {
 					
 					int idx = e + f * (2 * NUM_EL);
@@ -75,10 +75,10 @@ int main(int argc, char *argv[]) {
 					toWrite[idx] = cDataImY;
 					}
 				}
-			} else {
-				cDataReX = 0;
-				cDataImY = 0;
-			}
+			//} else {
+			//	cDataReX = 0;
+			//	cDataImY = 0;
+			//}
 		}
 		(void) write(iFile, toWrite, NUM_EL*CHANNELS*(2*sizeof(char)));
 	}
