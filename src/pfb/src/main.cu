@@ -18,13 +18,17 @@ int main(int argc, char *argv[]) {
 
 	int ret = EXIT_SUCCESS;
 
+	/*********************************** PARSE INPUT *****************************************/
+
 	/* valid short and long options */
-	const char* const pcOptsShort = ":hn:t:w:b:d:s:p";
+	const char* const pcOptsShort = ":hn:t:w:c:f:b:d:s:p";
 	const struct option stOptsLong[] = {
 		{ "help",		0, NULL,	'h' },   
 		{ "nfft", 		1, NULL,	'n' },
 		{ "taps",		1, NULL,	't' },
 		{ "window",		1, NULL,	'w' },
+		{ "coarse", 	1, NULL,	'c' },
+		{ "fine",		1, NULL, 	'f' },
 		{ "nsub",		1, NULL,	'b' },
 		{ "datatype",	1, NULL,	'd' },
 		{ "select",		1, NULL,	's' },
@@ -69,6 +73,18 @@ int main(int argc, char *argv[]) {
 
 			case 'w':
 				pfbParams.window = optarg;
+				break;
+
+			case 'c':
+				pfbParams.coarse_channels = (int) atoi(optarg);
+				break;
+
+			case 'e':
+				pfbParams.elements = (int) atoi(optarg);
+				break;
+
+			case 'f':
+				pfbParams.fine_channels = (int) atoi(optarg);
 				break;
 
 			case 'b':
@@ -134,6 +150,8 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	/****************************** SETUP PFB ******************************/
+
 	/* init cuda device */
 	int iCudaDevice = DEF_CUDA_DEVICE;
 
@@ -146,7 +164,8 @@ int main(int argc, char *argv[]) {
 	// malloc data arrays
 
 	//int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
+	//int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
+	int outputSize = SAMPLES * pfbParams.fine_channels * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
 
 	g_outputData = (float2*) malloc(outputSize);
 	memset(g_outputData, 0, outputSize);

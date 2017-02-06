@@ -60,11 +60,7 @@ int main(int argc, char *argv[]) {
 	for(n = 0; n < N; n++) {
 		for(f = 0; f < CHANNELS; f++) {
 
-<<<<<<< HEAD
 			//if(f==5){ // only insert one tone
-=======
-			//if(f==0){ // only insert one tone
->>>>>>> 8a32589d39e839728f5af9c3b62f3dfb6b035dbf
 
 				//use the same sample for all elements
 				cDataReX = SCALE_FACTOR * (.1 * cos(2*M_PI * freq[f] * n / F_S));
@@ -79,17 +75,10 @@ int main(int argc, char *argv[]) {
 					toWrite[idx] = cDataImY;
 					}
 				}
-<<<<<<< HEAD
 			//} else {
 			//	cDataReX = 0;
 			//	cDataImY = 0;
 			//}
-=======
-			// } else {
-			// 	cDataReX = 0;
-			// 	cDataImY = 0;
-			// }
->>>>>>> 8a32589d39e839728f5af9c3b62f3dfb6b035dbf
 		}
 		(void) write(iFile, toWrite, NUM_EL*CHANNELS*(2*sizeof(char)));
 	}
