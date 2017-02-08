@@ -23,6 +23,7 @@ dim3 g_dimBCopy(1, 1, 1);
 dim3 g_dimGCopy(1, 1);
 cufftHandle g_stPlan = {0};
 
+// data ptrs
 char2* g_pc2InBuf = NULL;
 char2* g_pc2InBufRead = NULL;
 
@@ -53,14 +54,14 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 	int countFFT = 0; // count number of FFT's computed.
 	long lProcData = 0; // count how much data processed
 	//long ltotData = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS; // total amount of data to proc
-	long ltotData = SAMPLES * pfbParams.coarse_channels * DEF_NUM_ELEMENTS; // total amount of data to proc
+	long ltotData = SAMPLES * pfbParams.coarse_channels * pfbParams.elements; // total amount of data to proc
 
 	//malloc and copy data to device
 	//int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	int fullSize = SAMPLES * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
 	fprintf(stderr, "Full data output size: %i\n", fullSize);
 	//int mapSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	int mapSize = SAMPLES * pfbParams.fine_channels * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	int mapSize = SAMPLES * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(char));
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pcInputData_d, fullSize));
 	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pcInputData_d, 0, fullSize));
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2Data_d, mapSize));
@@ -77,7 +78,7 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 	// extract channel data from full data stream and load into buffer.
 	//dim3 mapGSize(SAMPLES, PFB_CHANNELS, 1);
 	dim3 mapGSize(SAMPLES, pfbParams.fine_channels, 1);
-	dim3 mapBSize(1, DEF_NUM_ELEMENTS, 1);
+	dim3 mapBSize(1, pfbParams.elements, 1);
 	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, g_pc2Data_d, channelSelect, pfbParams);
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());

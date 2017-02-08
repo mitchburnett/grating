@@ -10,14 +10,17 @@ ARCH_FLAG = -arch=sm_11
 
 all: runPFB
 
-runPFB: main.o pfb.o helper.o
-	$(CC) -o ../bin/runPFB main.o pfb.o helper.o $(LIBRARIES)
+runPFB: main.o pfb.o helper.o tools.o
+	$(CC) -o ../bin/runPFB main.o pfb.o helper.o tools.o $(LIBRARIES)
 
-main.o: main.cu helper.h pfb.h
+main.o: main.cu helper.h pfb.h tools/tools.h
 	$(CC) -c main.cu $(ARCH_FLAG)
 
 pfb.o: pfb.cu pfb.h
 	$(CC) -c pfb.cu $(ARCH_FLAG)
+
+tools.o: tools/tools.c tools/tools.h
+	$(CC) -c tools/tools.c
 
 helper.o: helper.c helper.h pfb.h
 	$(CC) -c helper.c

@@ -3,6 +3,7 @@
 extern "C" {
 #endif
 #include "helper.h"
+#include "tools/tools.h"
 #ifdef __cplusplus
 }
 
@@ -21,7 +22,7 @@ int main(int argc, char *argv[]) {
 	/*********************************** PARSE INPUT *****************************************/
 
 	/* valid short and long options */
-	const char* const pcOptsShort = ":hn:t:w:c:f:b:d:s:p";
+	const char* const pcOptsShort = ":hn:t:w:c:f:e:b:d:s:p";
 	const struct option stOptsLong[] = {
 		{ "help",		0, NULL,	'h' },   
 		{ "nfft", 		1, NULL,	'n' },
@@ -29,6 +30,7 @@ int main(int argc, char *argv[]) {
 		{ "window",		1, NULL,	'w' },
 		{ "coarse", 	1, NULL,	'c' },
 		{ "fine",		1, NULL, 	'f' },
+		{ "elements",	1, NULL,	'e' },
 		{ "nsub",		1, NULL,	'b' },
 		{ "datatype",	1, NULL,	'd' },
 		{ "select",		1, NULL,	's' },
@@ -137,18 +139,29 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	// get data filename
-	char filename[256] = {0};
-	(void) strncpy(filename, argv[optind], 256);
-	filename[255] = '\0';
+	// // get data filename
+	// char filename[256] = {0};
+	// (void) strncpy(filename, argv[optind], 256);
+	// filename[255] = '\0';
 
 	// load data into memory
-	int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	//int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	int readSize = SAMPLES * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
 	g_inputData = (char*) malloc(readSize);
-	ret = loadData(filename, g_inputData);
-	if (ret == EXIT_FAILURE) {
-		return EXIT_FAILURE;
+	// ret = loadData(filename, g_inputData);
+	// if (ret == EXIT_FAILURE) {
+	// 	return EXIT_FAILURE;
+	// }
+
+	//generate freq array
+	int i = 0;
+	int channelBandgap = 10.0;		// KHz jumps
+	float* freq = (float *) malloc(pfbParams.coarse_channels*sizeof(float));
+	for(i = 0; i <= pfbParams.coarse_channels; i++) {
+		freq[i] = channelBandgap * i + 5.0;
 	}
+	float fs = 303.0;
+	genData(g_inputData, freq, fs, pfbParams.samples, pfbParams.coarse_channels, pfbParams.elements);
 
 	/****************************** SETUP PFB ******************************/
 
@@ -165,7 +178,7 @@ int main(int argc, char *argv[]) {
 
 	//int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	//int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
-	int outputSize = SAMPLES * pfbParams.fine_channels * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
+	int outputSize = SAMPLES * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(float)); // need to convince myself of this output data size.
 
 	g_outputData = (float2*) malloc(outputSize);
 	memset(g_outputData, 0, outputSize);
