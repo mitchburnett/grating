@@ -34,9 +34,9 @@ LFLAGS_PGPLOT = $(LFLAGS_PGPLOT_DIR)  -lcpgplot -lpgplot -lpng -lgfortran -lX11
 LFLAGS_MATH = -lm
 
 # directories
-SRCDIR = src
+SRCDIR = src/grating
 TOOLSDIR = tools
-IDIR = src
+IDIR = src/grating
 BINDIR = bin
 
 # command definitions
