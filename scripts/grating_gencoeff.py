@@ -11,8 +11,8 @@ import sys
 import getopt
 import math
 import numpy
-import matplotlib.pyplot as plotter
 import scipy.signal as sp
+import matplotlib.pyplot as plotter
 
 # function definitions
 def PrintUsage(ProgName):
@@ -21,23 +21,44 @@ def PrintUsage(ProgName):
     print "    -h  --help                 Display this usage information"
     print "    -n  --nfft <value>         Number of points in FFT"
     print "    -t  --taps <value>         Number of taps in PFB"
+    print "    -w  --window <value>       Window to apply i.e \"cheb-win\", default: rect."
     print "    -b  --sub-bands <value>    Number of sub-bands in data"
     print "    -d  --data-type <value>    Data type - \"float\" or "          \
           + "\"signedchar\""
     print "    -p  --no-plot              Do not plot coefficients"
+    print "    Window types:"
+    print "       rect"
+    print "       hanning"
+    print "       cheb-win"
     return
+
+def genCoeff(window, M):
+
+    # CHEBWIN
+    if window == "cheb-win":
+        PFBCoeff = sp.chebwin(M, at=-30)
+
+    # HANNING WINDOW
+    elif window == "hanning":
+        X = numpy.array([(float(i) / NFFT) - (float(NTaps) / 2) for i in range(M)])
+        PFBCoeff = numpy.sinc(X) * numpy.hanning(M)
+
+    else:
+        PFBCoeff = numpy.ones(M)
+    return PFBCoeff
 
 # default values
 NFFT = 32768                # number of points in FFT
 NTaps = 8                   # number of taps in PFB
+Window = "rect"             # rectangular window
 NSubBands = 1               # number of sub-bands in data
 DataType = "signedchar"     # data type - "float" or "signedchar"
 Plot = True                 # plot flag
 
 # get the command line arguments
 ProgName = sys.argv[0]
-OptsShort = "hn:t:b:d:p"
-OptsLong = ["help", "nfft=", "taps=", "sub-bands=", "data-type=", "no-plot"]
+OptsShort = "hn:t:w:b:d:p"
+OptsLong = ["help", "nfft=", "taps=","window=", "sub-bands=", "data-type=", "no-plot"]
 
 # check if the minimum expected number of arguments has been passed
 # to the program
@@ -64,6 +85,8 @@ for o, a in Opts:
         NFFT = int(a)
     elif o in ("-t", "--taps"):
         NTaps = int(a)
+    elif o in ("-w", "--window"):
+        Window = a
     elif o in ("-b", "--sub-bands"):
         NSubBands = int(a)
     elif o in ("-d", "--data-type"):
@@ -75,12 +98,7 @@ for o, a in Opts:
         sys.exit(1)
 
 M = NTaps * NFFT
-
-# the filter-coefficient-generation section -->
-X = numpy.array([(float(i) / NFFT) - (float(NTaps) / 2) for i in range(M)])
-PFBCoeff = sp.chebwin(M, at=30)
-#PFBCoeff = numpy.sinc(X) * numpy.hanning(M)
-# <-- the filter-coefficient-generation section
+PFBCoeff = genCoeff(Window, M)
 
 # create conversion map
 if ("signedchar" == DataType):
@@ -100,20 +118,21 @@ for i in range(len(PFBCoeff)):
     Coeff = float(PFBCoeff[i])
     if ("signedchar" == DataType):
         for j in range(256):
-            #if (math.fabs(Coeff - Map[j]) <= (0.0078125 / 2)):
+            # if (math.fabs(Coeff - Map[j]) <= (0.0078125 / 2)):
             if (math.fabs(Coeff - Map[j]) <= 0.0078125):
                 for m in range(NSubBands):
-                    PFBCoeffInt8[k+m] = j
+                    PFBCoeffInt8[k + m] = j
                 break
     elif ("float" == DataType):
         for m in range(NSubBands):
-            PFBCoeffFloat32[k+m] = Coeff
+            PFBCoeffFloat32[k + m] = Coeff
     else:
         # print usage information and exit
         sys.stderr.write("ERROR: Invalid data type!\n")
         PrintUsage(ProgName)
         sys.exit(1)
     k = k + NSubBands
+
 
 # write the coefficients to disk and also plot it
 FileCoeff = open("coeff_"                                                     \

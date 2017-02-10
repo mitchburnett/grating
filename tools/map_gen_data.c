@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 
 #define LEN_GENSTRING 256
 #define SCALE_FACTOR  127
-#define F_S		      256   // MHz
+#define F_S		      303.0 // KHz
 #define N			  4000  // Time samples
 #define CHANNELS	  25    // Freq Channels
 #define NUM_EL		  64    // Antenna Elements
@@ -41,11 +42,11 @@ int main(int argc, char *argv[]) {
 
 	int i = 0;
 
-	// generate freq array of
-	int channelBandgap = 5;		// MHz jumps
+	//generate freq array of
+	int channelBandgap = 10.0;		// KHz jumps
 	float freq[CHANNELS] = {};
-	for(i = 1; i <= CHANNELS; i++) {
-		freq[i-1] = channelBandgap * i;
+	for(i = 0; i <= CHANNELS; i++) {
+		freq[i] = channelBandgap * i + 5.0;
 	}
 
 	int n = 0;
@@ -59,19 +60,25 @@ int main(int argc, char *argv[]) {
 	for(n = 0; n < N; n++) {
 		for(f = 0; f < CHANNELS; f++) {
 
-			//use the same sample for all elements
-			cDataReX = SCALE_FACTOR * (0.1 * cos(2*M_PI * freq[f] * n / F_S));
-			cDataImY = SCALE_FACTOR * (0.1 * sin(2*M_PI * freq[f] * n / F_S));
-			for(e = 0; e < 2*NUM_EL; e++) {
-				
-				int idx = e + f * (2 * NUM_EL);
-				if( !(e%2) ) {
-				//create interleaved samples for real and Im 
-				toWrite[idx] = cDataReX;
-				} else {
-				toWrite[idx] = cDataImY;
+			//if(f==5){ // only insert one tone
+
+				//use the same sample for all elements
+				cDataReX = SCALE_FACTOR * (.1 * cos(2*M_PI * freq[f] * n / F_S));
+				cDataImY = SCALE_FACTOR * (.1 * sin(2*M_PI * freq[f] * n / F_S));
+				for(e = 0; e < 2*NUM_EL; e++) {
+					
+					int idx = e + f * (2 * NUM_EL);
+					if( !(e%2) ) {
+					//create interleaved samples for real and Im 
+					toWrite[idx] = cDataReX;
+					} else {
+					toWrite[idx] = cDataImY;
+					}
 				}
-			}
+			//} else {
+			//	cDataReX = 0;
+			//	cDataImY = 0;
+			//}
 		}
 		(void) write(iFile, toWrite, NUM_EL*CHANNELS*(2*sizeof(char)));
 	}
