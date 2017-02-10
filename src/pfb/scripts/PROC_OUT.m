@@ -1,12 +1,12 @@
 clearvars;
 %%
 
-N = 4000;
-totalCh = 25;
-coarseCh = 5;
-numEl = 64;
+N = 224*224;
+totalCh = 1;
+coarseCh = 1;
+numEl = 1;
 
-fs = 303;
+fs = 224;
 nfft = 32;
 ntaps = 8;
 subbands = coarseCh*numEl; % 5 channels processed * 64 el = 320 subbands
@@ -24,6 +24,7 @@ size_slice = coarseCh*(numEl*2)*nfft;
 rows = length(output)/size_slice; % This is not the same size as windows and need to figure out why.
 
 CH = zeros(numEl*coarseCh, nfft);
+XX = zeros(windows, nfft);
 for i = 1:windows
     slice = output((i-1)*size_slice+1:i*size_slice);
     tmp = reshape(slice, [coarseCh*(2*numEl) nfft]);
@@ -34,7 +35,7 @@ for i = 1:windows
         el_re = ch_slice(1:2:end,:);
         el_im = ch_slice(2:2:end,:);
         el_spectra = abs(el_re + j*el_im).^2;
-        
+        XX(i,:) = el_spectra;
 %         faxis = 0:fs/nfft:fs-1/nfft;
 %         plot(faxis, 10*log10(el_spectra+.001));
         
@@ -63,7 +64,7 @@ ylabel('Magnitude (dB)');
 title('Coarse Channel 1 - Processed output');
 set(gca, 'xtick', [0:14]*20 + 5);
 
-for i = 2:5
+for i = 2:coarseCh
     ch_idx = i;
     el_data = CH((ch_idx-1)*numEl+1:ch_idx*numEl,:);
     el = el_data(el_idx, :);
