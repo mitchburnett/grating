@@ -371,7 +371,7 @@ int initPFB(int iCudaDevice, params pfbParams){
 
 	(void) fprintf(stdout, "\t\tKernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
 							g_dimGPFB.x, g_dimGPFB.y, g_dimGPFB.z,
-							g_dimBPFB.x, g_dimBPFB.y, g_dimGPFB.z);
+							g_dimBPFB.x, g_dimBPFB.y, g_dimBPFB.z);
 
 	// create a CUFFT plan
 	(void) fprintf(stdout, "\tCreating cuFFT plan...\n");
