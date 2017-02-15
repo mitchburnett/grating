@@ -19,7 +19,7 @@ void genData(char* data, float* freq, float fs, int samples, int channels, int e
  
 	signed char dataRe = 0;
 	signed char dataIm = 0;
-	int size = elements*channels*(2*sizeof(char)); // 2 for complex data.
+	//int size = elements*channels*(2*sizeof(char)); // 2 for complex data.
 	for(n = 0; n < samples; n++) {
 		for(f = 0; f < channels; f++) {
 
@@ -30,7 +30,7 @@ void genData(char* data, float* freq, float fs, int samples, int channels, int e
 				dataIm = SCALE_FACTOR * (.1 * sin(2*M_PI * freq[f] * n / fs));
 				for(e = 0; e < 2*elements; e++) {
 					
-					int idx = e + f * (2 * elements);
+					int idx = e + f * (2 * elements) + n * channels * (2*elements);
 					if( !(e%2) ) {
 					//create interleaved samples for real and Im 
 					data[idx] = dataRe;

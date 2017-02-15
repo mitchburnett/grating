@@ -13,7 +13,7 @@
 #include <errno.h>		/* for errno   */
 
 void printUsage(const char* progName);
-int loadData(char* f, char* inputData);
+int loadData(char* f, char* inputData, int size);
 
 
 #endif

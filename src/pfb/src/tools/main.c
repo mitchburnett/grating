@@ -134,14 +134,6 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	fprintf(stdout,
-			"INFO: Generating samples...\n"
-			"\tSamples:\t %d\n"
-			"\tSample rate:\t %d\n"
-			"\tChannels:\t %d\n"
-			"\tElements:\t %d\n",
-			samples, fs, coarseChannels, elements);
-
 	if(writeFile) {
 		char acDataFilename[LEN_GENSTRING] = {0};
 		(void) strncpy(acDataFilename, argv[optind], LEN_GENSTRING);
@@ -157,7 +149,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	int size = samples*coarseChannels*elements;
-	char* data = (char*) malloc(size*2*sizeof(char));
+	char* data = (signed char*) malloc(size*2*sizeof(char));
 
 	//generate freq array
 	int i = 0;

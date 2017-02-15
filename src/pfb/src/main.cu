@@ -22,12 +22,13 @@ int main(int argc, char *argv[]) {
 	/*********************************** PARSE INPUT *****************************************/
 
 	/* valid short and long options */
-	const char* const pcOptsShort = ":hn:t:w:c:f:e:b:d:s:p";
+	const char* const pcOptsShort = ":hn:t:w:k:c:f:e:b:d:s:p";
 	const struct option stOptsLong[] = {
 		{ "help",		0, NULL,	'h' },   
 		{ "nfft", 		1, NULL,	'n' },
 		{ "taps",		1, NULL,	't' },
 		{ "window",		1, NULL,	'w' },
+		{ "samples",	1, NULL,	'k' },
 		{ "coarse", 	1, NULL,	'c' },
 		{ "fine",		1, NULL, 	'f' },
 		{ "elements",	1, NULL,	'e' },
@@ -75,6 +76,10 @@ int main(int argc, char *argv[]) {
 
 			case 'w':
 				pfbParams.window = optarg;
+				break;
+
+			case 'k':
+				pfbParams.samples = (int) atoi(optarg);
 				break;
 
 			case 'c':
@@ -134,34 +139,42 @@ int main(int argc, char *argv[]) {
 	}
 
 	// no data file presented
+	int genFlag = 0;
 	if(argc <= optind) {
 		(void) fprintf(stderr, "ERROR: Missing data file.\n");
-		return EXIT_FAILURE;
+		genFlag = 1;
+		//return EXIT_FAILURE;
 	}
 
-	// // get data filename
-	// char filename[256] = {0};
-	// (void) strncpy(filename, argv[optind], 256);
-	// filename[255] = '\0';
 
-	// load data into memory
+	// init input data array
 	//int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	int readSize = SAMPLES * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
+	int readSize = pfbParams.samples * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
 	g_inputData = (char*) malloc(readSize);
-	// ret = loadData(filename, g_inputData);
-	// if (ret == EXIT_FAILURE) {
-	// 	return EXIT_FAILURE;
-	// }
+	memset(g_inputData, 0, readSize);
 
-	//generate freq array
-	int i = 0;
-	int channelBandgap = 10.0;		// KHz jumps
-	float* freq = (float *) malloc(pfbParams.coarse_channels*sizeof(float));
-	for(i = 0; i <= pfbParams.coarse_channels; i++) {
-		freq[i] = channelBandgap * i + 5.0;
-	}
-	float fs = 303.0;
-	genData(g_inputData, freq, fs, pfbParams.samples, pfbParams.coarse_channels, pfbParams.elements);
+	// Determine wether to get data from a file or generate it. 
+	if(!genFlag) {
+		// get data filename
+		char filename[256] = {0};
+		(void) strncpy(filename, argv[optind], 256);
+		filename[255] = '\0';
+		ret = loadData(filename, g_inputData, readSize);
+		if (ret == EXIT_FAILURE) {
+			return EXIT_FAILURE;
+		}
+	} else {
+		// generate data
+		//generate freq array for data
+		int i = 0;
+		float fs = 303.0; // KHz - a default sample rate.
+		int channelBandgap = 10.0;		// KHz jumps
+		float* freq = (float *) malloc(pfbParams.coarse_channels*sizeof(float));
+		for(i = 0; i <= pfbParams.coarse_channels; i++) {
+			freq[i] = channelBandgap * i + 5.0;
+		}
+		genData(g_inputData, freq, fs, pfbParams.samples, pfbParams.coarse_channels, pfbParams.elements);
+	}		
 
 	/****************************** SETUP PFB ******************************/
 
@@ -178,7 +191,7 @@ int main(int argc, char *argv[]) {
 
 	//int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	//int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
-	int outputSize = SAMPLES * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(float)); // need to convince myself of this output data size.
+	int outputSize = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(float)); // need to convince myself of this output data size.
 
 	g_outputData = (float2*) malloc(outputSize);
 	memset(g_outputData, 0, outputSize);
