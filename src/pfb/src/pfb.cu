@@ -53,14 +53,11 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 	int countCpyFFT = 0;
 	int countFFT = 0; // count number of FFT's computed.
 	long lProcData = 0; // count how much data processed
-	//long ltotData = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS; // total amount of data to proc
 	long ltotData = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements; // total amount of data to proc
 
 	//malloc and copy data to device
-	//int fullSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	int fullSize = pfbParams.samples * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
-	fprintf(stderr, "Full data output size: %i\n", fullSize);
-	//int mapSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
+	fprintf(stderr, "Full data output size: %i (Bytes)\n", fullSize);
 	int mapSize = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(char));
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pcInputData_d, fullSize));
 	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pcInputData_d, 0, fullSize));
@@ -76,7 +73,6 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 	"\tSubbands: %d\n",
 	g_iNFFT, g_iNTaps, g_iNumSubBands);
 	// extract channel data from full data stream and load into buffer.
-	//dim3 mapGSize(SAMPLES, PFB_CHANNELS, 1);
 	dim3 mapGSize(pfbParams.samples, pfbParams.fine_channels, 1);
 	dim3 mapBSize(1, pfbParams.elements, 1);
 	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, g_pc2Data_d, channelSelect, pfbParams);
@@ -134,6 +130,9 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 		(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
 		(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
 		if(lProcData > ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
+			(void) fprintf(stdout, "\nINFO: Processed finished!\n");
+			//(void) fprintf(stdout, "\tCounters--PFB:%d FFT:%d\n",countPFB, countFFT);
+			//(void) fprintf(stdout, "\tData process by the numbers:\n \tProcessed:%ld (Samples) \n \tTo Process:%ld (Samples)\n\n",lProcData, ltotData);
 			g_IsProcDone = TRUE;
 		}
 
@@ -413,10 +412,8 @@ __global__ void map(char* dataIn,
 {
 
 	// select the channel range
-	//int channelMin = PFB_CHANNELS*channelSelect;
 	int channelMin = pfbParams.fine_channels*channelSelect;
 	
-	//int absIdx = 2 * blockDim.y*(blockIdx.x*DEF_NUM_CHANNELS + (channelMin+blockIdx.y)) + 2 * threadIdx.y;  // times 2 because we are mapping a sequence of values to char2 array.
 	int absIdx = 2 * blockDim.y*(blockIdx.x*pfbParams.coarse_channels + (channelMin+blockIdx.y)) + 2 * threadIdx.y;  // times 2 because we are mapping a sequence of values to char2 array.
 	int mapIdx = blockDim.y*(blockIdx.x*gridDim.y + blockIdx.y) + threadIdx.y;
 

@@ -46,6 +46,8 @@
 #define FILE_COEFF_DATATYPE		"float"
 #define FILE_COEFF_SUFFIX		".dat"
 
+#define USEC2SEC            1e-6
+
 typedef unsigned char BYTE;
 
 // stuct of parameters for PFB. Values indicate default values.

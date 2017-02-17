@@ -9,6 +9,7 @@ extern "C" {
 
 #endif
 #include "pfb.h"
+#include <sys/time.h>
 
 char* g_inputData = NULL;
 float2* g_outputData = NULL;
@@ -188,16 +189,23 @@ int main(int argc, char *argv[]) {
 	ret = initPFB(iCudaDevice, pfbParams);
 
 	// malloc data arrays
-
-	//int inputSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
-	//int outputSize = SAMPLES * PFB_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(float)); // need to convince myself of this output data size.
 	int outputSize = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(float)); // need to convince myself of this output data size.
 
 	g_outputData = (float2*) malloc(outputSize);
 	memset(g_outputData, 0, outputSize);
 
-	// start pfb function
+
+	// run the pfb function
+	struct timeval timeStart = {0};
+    struct timeval timeStop = {0};
+    float timeTaken = 0.0;
+	(void) gettimeofday(&timeStart, NULL);
 	ret = runPFB(g_inputData, g_outputData, pfbParams);
+	(void) gettimeofday(&timeStop, NULL);
+
+	timeTaken = (timeStop.tv_sec + (timeStop.tv_usec * USEC2SEC)) - (timeStart.tv_sec + (timeStart.tv_usec * USEC2SEC));
+	(void) printf("Time taken (barring Init()): %gs\n", timeTaken);
+
 	if (ret == EXIT_FAILURE) {
 		(void) fprintf(stderr, "ERROR: runPFB failed!\n");
 		free(g_inputData);

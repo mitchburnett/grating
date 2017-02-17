@@ -1,15 +1,7 @@
+/*
+*	Kernels.cu is the implementation of the kernels
+*/
 #include "kernels.h"
-
-// helper function defintions
-void __checkCudaErrors(cudaError_t err, const char* const func, const char* file, const int line) {
-	if(err != cudaSuccess) {
-		std::cerr << "ERROR: file <" << file << ">" << ":" << line << " ";
-		std::cerr << cudaGetErrorString(err) << " : " << func << std::endl;
-		//cleanUp();
-		//resetDevice();
-		exit(0);
-	}
-}
 
 __global__ void reduction(int* signal_d, int n) {
 
@@ -35,7 +27,7 @@ __global__ void reduction(int* signal_d, int n) {
 		__syncthreads();
 	}
 
-	//get result and avg
+	//assign the result
 	if(tidx == 0){
 		signal_d[blockIdx.x] = smem[0];
 	}

@@ -1,12 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
+/*
+*   Kernels.h contains all cuda specific code and syntax.
+*/
 
 #include <cuda.h>
-#include <cuda_runtime.h> // Needed to include this or would complain about device identifier and cudaError_t and other cuda terms. (The question is this the correct file to include or are these terms included in cuda.h and I am just missing something to create the best wrapper.)
-
-#define checkCudaErrors(err) __checkCudaErrors(err, #err, __FILE__, __LINE__)
-void __checkCudaErrors(cudaError_t err, const char* const func, const char* file, const int line);
+#include <cuda_runtime.h>
 
 template<class T>
 struct SharedMemory

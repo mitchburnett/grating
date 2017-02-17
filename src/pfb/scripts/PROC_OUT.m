@@ -1,12 +1,12 @@
 clearvars; close all;
 %%
 
-N = 224*224;
-totalCh = 1;
-coarseCh = 1;
+N = 4000;
+totalCh = 2;
+coarseCh = 2;
 numEl = 1;
 
-fs = 224;
+fs = 303;
 nfft = 32;
 ntaps = 8;
 subbands = coarseCh*numEl; % 5 channels processed * 64 el = 320 subbands
