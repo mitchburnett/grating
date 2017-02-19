@@ -127,12 +127,12 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 
 		//update proc data
 		lProcData += g_iNumSubBands * g_iNFFT;
-		(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
-		(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
+		//(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
+		//(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
 		if(lProcData > ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
 			(void) fprintf(stdout, "\nINFO: Processed finished!\n");
-			//(void) fprintf(stdout, "\tCounters--PFB:%d FFT:%d\n",countPFB, countFFT);
-			//(void) fprintf(stdout, "\tData process by the numbers:\n \tProcessed:%ld (Samples) \n \tTo Process:%ld (Samples)\n\n",lProcData, ltotData);
+			(void) fprintf(stdout, "\tCounters--PFB:%d FFT:%d\n",countPFB, countFFT);
+			(void) fprintf(stdout, "\tData process by the numbers:\n \tProcessed:%ld (Samples) \n \tTo Process:%ld (Samples)\n\n",lProcData, ltotData);
 			g_IsProcDone = TRUE;
 		}
 
