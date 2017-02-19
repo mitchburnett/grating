@@ -1,12 +1,12 @@
-clearvars;
+clearvars; close all;
 %%
 
-N = 224*224;
-totalCh = 1;
-coarseCh = 1;
+N = 4000;
+totalCh = 2;
+coarseCh = 2;
 numEl = 1;
 
-fs = 224;
+fs = 303;
 nfft = 32;
 ntaps = 8;
 subbands = coarseCh*numEl; % 5 channels processed * 64 el = 320 subbands
@@ -34,10 +34,8 @@ for i = 1:windows
         ch_slice = tmp((k-1)*numEl*2+1:k*numEl*2,:);
         el_re = ch_slice(1:2:end,:);
         el_im = ch_slice(2:2:end,:);
-        el_spectra = abs(el_re + j*el_im).^2;
-        XX(i,:) = el_spectra;
-%         faxis = 0:fs/nfft:fs-1/nfft;
-%         plot(faxis, 10*log10(el_spectra+.001));
+        el_spectra = abs(el_re + 1j*el_im).^2;
+        XX(i,:) = el_spectra; % save the spectra to plot filter response.
         
         CH((k-1)*numEl+1:k*numEl,:) = CH((k-1)*numEl+1:k*numEl,:) + el_spectra;
     end
@@ -54,7 +52,7 @@ faxis = 0:fs/nfft:fs-1/nfft;
 el_data = CH((ch_idx-1)*numEl+1:ch_idx*numEl,:);
 el = el_data(el_idx, :);
 
-figure(4); clf;
+figure(1); clf;
 subplot(321);
 plot(faxis, 10*log10(el+.001)); grid on;
 xlim([min(faxis), max(faxis)]);
@@ -77,4 +75,18 @@ for i = 2:coarseCh
     title(['coarse channel ' num2str(i)]);
     set(gca, 'xtick', [0:14]*20 + 5);
 end
+
+%% Plot the filter response.
+figure(2); clf; hold on; grid on;
+numberOfResponses = 2;
+
+faxis_response = 0:fs/windows:fs - 1/windows;
+
+for i = 1:nfft/numberOfResponses:nfft
+    plot(faxis_response, 10*log10(abs(XX(:,i))));
+end
+xlim([min(faxis_response) max(faxis_response)]);
+title('PFB Filter Response');
+xlabel('Frequency (MHz)');
+ylabel('Gain (dB)');
 
