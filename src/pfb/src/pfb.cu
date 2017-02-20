@@ -23,6 +23,8 @@ dim3 g_dimBCopy(1, 1, 1);
 dim3 g_dimGCopy(1, 1);
 cufftHandle g_stPlan = {0};
 
+dim3 mapGSize(1,1,1);
+dim3 mapBSize(1,1,1);
 // data ptrs
 char2* g_pc2InBuf = NULL;
 char2* g_pc2InBufRead = NULL;
@@ -45,8 +47,6 @@ char* g_pcInputData_d = NULL;
 
 int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 
-	int channelSelect = pfbParams.select;
-
 	//process variables
 	int iRet = EXIT_SUCCESS;
 	int countPFB = 0; // count number of times pfb fires.
@@ -55,41 +55,17 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 	long lProcData = 0; // count how much data processed
 	long ltotData = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements; // total amount of data to proc
 
-	//malloc and copy data to device
-	int fullSize = pfbParams.samples * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
-	fprintf(stderr, "Full data output size: %i (Bytes)\n", fullSize);
-	int mapSize = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(char));
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pcInputData_d, fullSize));
-	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pcInputData_d, 0, fullSize));
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2Data_d, mapSize));
-	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pc2Data_d, 0, mapSize));
+	// copy data to device
+	CUDASafeCallWithCleanUp(cudaMemcpy(g_pcInputData_d, inputData_h, g_iSizeRead, cudaMemcpyHostToDevice)); //g_iSizeRead = samples*coarse_channels*elements*(2*sizeof(char));
 
-	CUDASafeCallWithCleanUp(cudaMemcpy(g_pcInputData_d, inputData_h, fullSize, cudaMemcpyHostToDevice));
-
-	fprintf(stdout,
-	"INFO: PFB Parameters\n"
-	"\tNFFT: %d\n"
-	"\tTAPS: %d\n"
-	"\tSubbands: %d\n",
-	g_iNFFT, g_iNTaps, g_iNumSubBands);
-	// extract channel data from full data stream and load into buffer.
-	dim3 mapGSize(pfbParams.samples, pfbParams.fine_channels, 1);
-	dim3 mapBSize(1, pfbParams.elements, 1);
-	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, g_pc2Data_d, channelSelect, pfbParams);
+	// map - extract channel data from full data stream and load into buffer.
+	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, g_pc2Data_d, pfbParams.select, pfbParams);
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
-	fprintf(stdout,
-	"INFO: MAP dimenstions\n"
-	"\tGrid size: (%d, %d, %d)\n"
-	"\tBlock Dim: (%d, %d, %d)\n",
-	mapGSize.x, mapGSize.y, mapGSize.z,
-	mapBSize.x, mapBSize.y, mapBSize.z);
-
 	// Begin PFB
-	// p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
-	g_pc2DataRead_d = g_pc2Data_d;
-	int pfb_on = 1;
+	g_pc2DataRead_d = g_pc2Data_d; // p_pc2Data_d contains all the data. DataRead will update with each pass through the PFB.
+	int pfb_on = 1; // Enable pfb flag. Extendable.
 	while(!g_IsProcDone){
 
 		if(pfb_on) {
@@ -118,22 +94,23 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 		CUDASafeCallWithCleanUp(cudaGetLastError());
 		++countFFT;
 
-		// copy data back to host.
-		int outDataSize = g_iNumSubBands * g_iNFFT * (sizeof(cufftComplex));
-		CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
-
-		//update output data pointer.
-		outputData_h += g_iNumSubBands * g_iNFFT;
+		//update output fft pointer.
+		g_pf2FFTOut_d += g_iNumSubBands * g_iNFFT;
 
 		//update proc data
 		lProcData += g_iNumSubBands * g_iNFFT;
-		(void) fprintf(stdout, "Counters--PFB:%d FFT:%d\n",countPFB, countFFT);
-		(void) fprintf(stdout, "Data process by the numbers:\n Processed:%ld\n To Process:%ld\n\n",lProcData, ltotData);
 		if(lProcData > ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
 			(void) fprintf(stdout, "\nINFO: Processed finished!\n");
-			//(void) fprintf(stdout, "\tCounters--PFB:%d FFT:%d\n",countPFB, countFFT);
-			//(void) fprintf(stdout, "\tData process by the numbers:\n \tProcessed:%ld (Samples) \n \tTo Process:%ld (Samples)\n\n",lProcData, ltotData);
+			(void) fprintf(stdout, "\tCounters--PFB:%d FFT:%d\n",countPFB, countFFT);
+			(void) fprintf(stdout, "\tData process by the numbers:\n \t\tProcessed:%ld (Samples) \n \t\tTo Process:%ld (Samples)\n\n",lProcData, ltotData);
 			g_IsProcDone = TRUE;
+
+			// copy back to host.
+			//wind back out ptr - should put in another pointer as a process read ptr.
+			int outDataSize = countFFT * g_iNumSubBands * g_iNFFT * sizeof(cufftComplex);
+			g_pf2FFTOut_d = g_pf2FFTOut_d - countFFT*g_iNumSubBands*g_iNFFT;
+			fprintf(stdout, "Copyting back: %d\n", outDataSize);
+			CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
 		}
 
 	}
@@ -202,11 +179,13 @@ int initPFB(int iCudaDevice, params pfbParams){
 	int iRet = EXIT_SUCCESS;
 
 	// set pfb params from input parameters.
+	pfbParams.subbands = pfbParams.elements*pfbParams.fine_channels;
+
 	g_iNFFT = pfbParams.nfft;
 	g_iNTaps = pfbParams.taps;
 	g_iNumSubBands = pfbParams.subbands; // equal to elements*fine_channels. (The fine channels are the channels processed.)
 
-	g_iSizeRead = pfbParams.samples*pfbParams.coarse_channels*pfbParams.elements*2; // 2 for complex data.
+	g_iSizeRead = pfbParams.samples*pfbParams.coarse_channels*pfbParams.elements*(2*sizeof(char));
 
 	int iDevCount = 0;
 	cudaDeviceProp stDevProp = {0};
@@ -258,7 +237,7 @@ int initPFB(int iCudaDevice, params pfbParams){
 	cudaMemGetInfo(&cudaMem_available, &cudaMem_total);
 	lTotCUDAMalloc += g_iSizeRead; // size   data
 	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(2))); // size of FFT input array This should be different since our data is unsigned char?
-	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float(2))); // size of FFT output array
+	lTotCUDAMalloc += (g_iNumSubBands * pfbParams.samples * sizeof(float(2))); // size of FFT output array
 	lTotCUDAMalloc += (g_iNumSubBands * g_iNFFT * sizeof(float)); 	// size of PFB Coefficients
 	// Check CUDA device can handle the memory request
 	if(lTotCUDAMalloc > stDevProp.totalGlobalMem) {
@@ -274,7 +253,7 @@ int initPFB(int iCudaDevice, params pfbParams){
 						((float) cudaMem_total) / (1024*1024),
 						((float) g_iSizeRead) / (1024 * 1024),
 						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
-						((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
+						((float) g_iNumSubBands * pfbParams.samples * sizeof(float2)) / (1024 * 1024),
 						((float) g_iNumSubBands * g_iNFFT * sizeof(float)));
 		return EXIT_FAILURE;
 	}
@@ -292,7 +271,7 @@ int initPFB(int iCudaDevice, params pfbParams){
 					((float) cudaMem_total) / (1024*1024),
 					((float) g_iSizeRead) / (1024 * 1024),
 					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
-					((float) g_iNumSubBands * g_iNFFT * sizeof(float2)) / (1024 * 1024),
+					((float) g_iNumSubBands * pfbParams.samples * sizeof(float2)) / (1024 * 1024),
 					((float) g_iNumSubBands * g_iNFFT * sizeof(float)));
 
 	/*************************/
@@ -342,6 +321,14 @@ int initPFB(int iCudaDevice, params pfbParams){
 	/********************************************/
 	(void) fprintf(stdout, "\nSetting up CUDA device.\n");
 
+	//malloc map array and copy data to device
+	(void) fprintf(stdout, "\tAllocating memory for MAP...\n");
+	int sizeMap = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(char));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pcInputData_d, g_iSizeRead));
+	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pcInputData_d, 0, g_iSizeRead));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2Data_d, sizeMap));
+	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pc2Data_d, 0, sizeMap));
+
 	// allocate memory for pfb coefficients on GPU
 	(void) fprintf(stdout, "\tAllocating memory for PFB...\n");
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pfPFBCoeff_d, sizePFB));
@@ -352,9 +339,10 @@ int initPFB(int iCudaDevice, params pfbParams){
 
 	// allocate memory for FFT in and out arrays
 	(void) fprintf(stdout, "\tAllocate memory for FFT arrays...\n");
-	int sizeDataBlock = g_iNumSubBands * g_iNFFT * sizeof(float2);
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf2FFTIn_d, sizeDataBlock));
-	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf2FFTOut_d, sizeDataBlock));
+	int sizeDataBlock_in = g_iNumSubBands * g_iNFFT * sizeof(float2);
+	int sizeTotalDataBlock_out = pfbParams.samples*g_iNumSubBands * sizeof(float2); // output fft array same size as output data for convinence the full size is not used. In the pfb function the output data will be the fft counter times block amount in the fft.
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf2FFTIn_d, sizeDataBlock_in));
+	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pf2FFTOut_d, sizeTotalDataBlock_out)); // goal will be to update the output ptr each time it fires.
 
 	// set kernel parameters
 	(void) fprintf(stdout, "\tSetting kernel parameters...\n");
@@ -368,9 +356,22 @@ int initPFB(int iCudaDevice, params pfbParams){
 	g_dimGPFB.x  = (g_iNumSubBands * g_iNFFT) / g_dimBPFB.x;
 	g_dimGCopy.x = (g_iNumSubBands * g_iNFFT) / g_dimBCopy.x;
 
-	(void) fprintf(stdout, "\t\tKernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
+	// map kernel params	
+	mapGSize.x = pfbParams.samples;
+	mapGSize.y = pfbParams.fine_channels;
+	mapGSize.z = 1;
+
+	mapBSize.x = 1;
+	mapBSize.y = pfbParams.elements;
+	mapBSize.z = 1;
+
+	(void) fprintf(stdout, "\t\tPFB Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
 							g_dimGPFB.x, g_dimGPFB.y, g_dimGPFB.z,
 							g_dimBPFB.x, g_dimBPFB.y, g_dimBPFB.z);
+
+	(void) fprintf(stdout, "\t\tMAP Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
+							mapGSize.x, mapGSize.y, mapGSize.z,
+							mapBSize.x, mapBSize.y, mapBSize.z);
 
 	// create a CUFFT plan
 	(void) fprintf(stdout, "\tCreating cuFFT plan...\n");
