@@ -70,7 +70,7 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 
 		if(pfb_on) {
 			//PFB
-			PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d, g_pfPFBCoeff_d);
+			PFB_kernel<<<g_dimGPFB, g_dimBPFB>>>(g_pc2DataRead_d, g_pf2FFTIn_d, g_pfPFBCoeff_d, pfbParams);
 			CUDASafeCallWithCleanUp(cudaGetLastError());
 			CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
@@ -278,7 +278,6 @@ int initPFB(int iCudaDevice, params pfbParams){
 	/* Load PFB coefficients */
 	/*************************/
 	(void) fprintf(stdout, "\nSetting up PFB filter coefficients...\n");
-	g_iNTaps = NUM_TAPS; // set the number of taps. Change this to where it happens earlier to be more dynamic.
 	int sizePFB = g_iNumSubBands * g_iNTaps * g_iNFFT * sizeof(float);
 
 	// Allocate memory for PFB coefficients to be read in
@@ -426,7 +425,8 @@ __global__ void map(char* dataIn,
 /* prepare data for PFB */
 __global__ void PFB_kernel(char2* pc2Data,
                       float2* pf2FFTIn,
-                      float* pfPFBCoeff)
+                      float* pfPFBCoeff,
+                      params pfbParams)
 {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     int iNFFT = (gridDim.x * blockDim.x);
@@ -435,7 +435,7 @@ __global__ void PFB_kernel(char2* pc2Data,
     float2 f2PFBOut = make_float2(0.0, 0.0);
     char2 c2Data = make_char2(0, 0);
 
-    for (j = 0; j < NUM_TAPS; ++j)
+    for (j = 0; j < pfbParams.taps; ++j)
     {
         /* calculate the absolute index */
         iAbsIdx = (j * iNFFT) + i;

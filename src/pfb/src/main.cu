@@ -144,12 +144,9 @@ int main(int argc, char *argv[]) {
 	if(argc <= optind) {
 		(void) fprintf(stderr, "ERROR: Missing data file.\n");
 		genFlag = 1;
-		//return EXIT_FAILURE;
 	}
-
-
+	
 	// init input data array
-	//int readSize = SAMPLES * DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS * (2*sizeof(char));
 	int readSize = pfbParams.samples * pfbParams.coarse_channels * pfbParams.elements * (2*sizeof(char));
 	g_inputData = (char*) malloc(readSize);
 	memset(g_inputData, 0, readSize);
@@ -183,6 +180,7 @@ int main(int argc, char *argv[]) {
 	int iCudaDevice = DEF_CUDA_DEVICE;
 
 	// create coeff and write to a file that is read in initPFB.
+	pfbParams.subbands = pfbParams.elements*pfbParams.fine_channels;
 	genCoeff(argc, argv, pfbParams);
 
 	// init the device, loads coeff
