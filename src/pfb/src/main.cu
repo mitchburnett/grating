@@ -194,12 +194,12 @@ int main(int argc, char *argv[]) {
 
 
 	// run the pfb function
-	struct timeval timeStart = {0};
-    struct timeval timeStop = {0};
-    float timeTaken = 0.0;
-	(void) gettimeofday(&timeStart, NULL);
+	clock_t start, end;
+	start = clock();
 	ret = runPFB(g_inputData, g_outputData, pfbParams);
-	(void) gettimeofday(&timeStop, NULL);
+	end = clock;
+	double timeTaken = 0;
+	timeTaken = ((double) (end - start))/CLOCKS_PER_SEC;
 
 	timeTaken = (timeStop.tv_sec + (timeStop.tv_usec * USEC2SEC)) - (timeStart.tv_sec + (timeStart.tv_usec * USEC2SEC));
 	(void) printf("Time taken (barring Init()): %gs\n", timeTaken);

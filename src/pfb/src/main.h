@@ -14,7 +14,7 @@
 #include <float.h>		/* for FLT_MAX */
 #include <getopt.h>		/* for option parsing */
 #include <assert.h>		/* for assert() */
-#include <errono.h>		/* for errno*/
+#include <errno.h>		/* for errno*/
 #include <signal.h>		/* for signal-hadnling */
 
 #include <sys/time.h>	/* for gettimeofday() */
