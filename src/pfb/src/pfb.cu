@@ -56,13 +56,13 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 	int countCpyFFT = 0;
 	int countFFT = 0; // count number of FFT's computed.
 	long lProcData = 0; // count how much data processed
-	long ltotData = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements; // total amount of data to proc
-
+	long ltotData = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements + pfbParams.fine_channels*pfbParams.elements*pfbParams.nfft*pfbParams.taps; // total amount of data to proc (includes the padding for the saved filter state.)
+	int start = pfbParams.fine_channels*pfbParams.elements*(pfbParams.nfft*pfbParams.taps); // starting point to copy over the map data.
 	// copy data to device
 	CUDASafeCallWithCleanUp(cudaMemcpy(g_pcInputData_d, inputData_h, g_iSizeRead, cudaMemcpyHostToDevice)); //g_iSizeRead = samples*coarse_channels*elements*(2*sizeof(char));
 
 	// map - extract channel data from full data stream and load into buffer.
-	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, g_pc2Data_d, pfbParams.select, pfbParams);
+	map<<<mapGSize, mapBSize>>>(g_pcInputData_d, &g_pc2Data_d[start], pfbParams.select, pfbParams);
 	CUDASafeCallWithCleanUp(cudaGetLastError());
 	CUDASafeCallWithCleanUp(cudaThreadSynchronize());
 
@@ -109,7 +109,7 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 			g_IsProcDone = TRUE;
 
 			// prepare next filter
-			copyData<<<saveGSize, saveBSize>>>(g_pc2DataRead_d, g_pc2Data_d);
+			saveData<<<saveGSize, saveBSize>>>(g_pc2DataRead_d, g_pc2Data_d);
 			CUDASafeCallWithCleanUp(cudaGetLastError());
 
 			// copy back to host.
@@ -326,7 +326,8 @@ int initPFB(int iCudaDevice, params pfbParams){
 
 	//malloc map array and copy data to device
 	(void) fprintf(stdout, "\tAllocating memory for MAP...\n");
-	int sizeMap = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(char));
+	// creates a size that is paddedd in the front to store the filter state. Worth one 256 (nfft*taps) time sample amount of data
+	int sizeMap = pfbParams.samples * pfbParams.fine_channels * pfbParams.elements * (2*sizeof(char)) + pfbParams.fine_channels*pfbParams.elements*pfbParams.nfft*pfbParams.taps * (2*sizeof(char));
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pcInputData_d, g_iSizeRead));
 	CUDASafeCallWithCleanUp(cudaMemset((void *)   g_pcInputData_d, 0, g_iSizeRead));
 	CUDASafeCallWithCleanUp(cudaMalloc((void **) &g_pc2Data_d, sizeMap));
@@ -480,7 +481,7 @@ __global__ void CopyDataForFFT(char2 *pc2Data, float2 *pf2FFTIn)
 }
 
 // prepares for the next PFB.
-__global__ void copyData(char2* dataIn, char2* dataOut){
+__global__ void saveData(char2* dataIn, char2* dataOut){
 	int i = blockIdx.y*(gridDim.x*blockDim.x) + blockIdx.x*blockDim.x + threadIdx.x;
 
 	dataOut[i] = dataIn[i];
