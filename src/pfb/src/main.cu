@@ -197,11 +197,10 @@ int main(int argc, char *argv[]) {
 	clock_t start, end;
 	start = clock();
 	ret = runPFB(g_inputData, g_outputData, pfbParams);
-	end = clock;
+	end = clock();
 	double timeTaken = 0;
 	timeTaken = ((double) (end - start))/CLOCKS_PER_SEC;
 
-	timeTaken = (timeStop.tv_sec + (timeStop.tv_usec * USEC2SEC)) - (timeStart.tv_sec + (timeStart.tv_usec * USEC2SEC));
 	(void) printf("Time taken (barring Init()): %gs\n", timeTaken);
 
 	if (ret == EXIT_FAILURE) {
@@ -224,6 +223,10 @@ int main(int argc, char *argv[]) {
 		free(g_outputData);
 		return EXIT_FAILURE;
 	}
+
+	// clean up and exit
+	cleanUp();
+	ret = resetDevice();
 
 	(void) write(file, g_outputData, outputSize);
 	(void) close(file);

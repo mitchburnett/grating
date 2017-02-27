@@ -25,6 +25,9 @@ cufftHandle g_stPlan = {0};
 
 dim3 mapGSize(1,1,1);
 dim3 mapBSize(1,1,1);
+
+dim3 saveGSize(1, 1, 1 ); // (5, 256, 1)
+dim3 saveBSize(1, 1, 1); // (64, 1, 1)
 // data ptrs
 char2* g_pc2InBuf = NULL;
 char2* g_pc2InBufRead = NULL;
@@ -99,11 +102,15 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 
 		//update proc data
 		lProcData += g_iNumSubBands * g_iNFFT;
-		if(lProcData > ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){
+		if(lProcData >= ltotData - NUM_TAPS*g_iNumSubBands*g_iNFFT){ // >= process 117 ffts leaving 256 time samples, > process 118 ffts leaving 224 time samples.
 			(void) fprintf(stdout, "\nINFO: Processed finished!\n");
 			(void) fprintf(stdout, "\tCounters--PFB:%d FFT:%d\n",countPFB, countFFT);
 			(void) fprintf(stdout, "\tData process by the numbers:\n \t\tProcessed:%ld (Samples) \n \t\tTo Process:%ld (Samples)\n\n",lProcData, ltotData);
 			g_IsProcDone = TRUE;
+
+			// prepare next filter
+			copyData<<<saveGSize, saveBSize>>>(g_pc2DataRead_d, g_pc2Data_d);
+			CUDASafeCallWithCleanUp(cudaGetLastError());
 
 			// copy back to host.
 			//wind back out ptr - should put in another pointer as a process read ptr.
@@ -114,9 +121,6 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 		}
 
 	}
-
-	cleanUp();
-	iRet = resetDevice();
 
 	return iRet;
 
@@ -364,13 +368,26 @@ int initPFB(int iCudaDevice, params pfbParams){
 	mapBSize.y = pfbParams.elements;
 	mapBSize.z = 1;
 
-	(void) fprintf(stdout, "\t\tPFB Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
+	// copy kernel params
+	saveGSize.x = pfbParams.fine_channels;
+	saveGSize.y = pfbParams.nfft*pfbParams.taps;
+	saveGSize.z = 1;
+
+	saveBSize.x = pfbParams.elements;
+	saveBSize.y = 1;
+	saveBSize.z = 1;
+
+	(void) fprintf(stdout, "\t\tPFB Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n\n",
 							g_dimGPFB.x, g_dimGPFB.y, g_dimGPFB.z,
 							g_dimBPFB.x, g_dimBPFB.y, g_dimBPFB.z);
 
-	(void) fprintf(stdout, "\t\tMAP Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
+	(void) fprintf(stdout, "\t\tMAP Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n\n",
 							mapGSize.x, mapGSize.y, mapGSize.z,
 							mapBSize.x, mapBSize.y, mapBSize.z);
+
+	(void) fprintf(stdout, "\t\tSave Kernel Parmaters are:\n\t\tgridDim(%d,%d,%d) blockDim(%d,%d,%d)\n",
+							saveGSize.x, saveGSize.y, saveGSize.z,
+							saveBSize.x, saveBSize.y, saveBSize.z);
 
 	// create a CUFFT plan
 	(void) fprintf(stdout, "\tCreating cuFFT plan...\n");
@@ -460,6 +477,15 @@ __global__ void CopyDataForFFT(char2 *pc2Data, float2 *pf2FFTIn)
     pf2FFTIn[i].y = (float) pc2Data[i].y;
 
     return;
+}
+
+// prepares for the next PFB.
+__global__ void copyData(char2* dataIn, char2* dataOut){
+	int i = blockIdx.y*(gridDim.x*blockDim.x) + blockIdx.x*blockDim.x + threadIdx.x;
+
+	dataOut[i] = dataIn[i];
+
+	return;
 }
 
 /* do fft on pfb data */
