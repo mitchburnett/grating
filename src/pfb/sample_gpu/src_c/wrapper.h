@@ -4,8 +4,7 @@
 *
 */
 
-#include <iostream>
-
+#include <stdio.h>
 #include "kernels.h"
 
 #define checkCudaErrors(err) __checkCudaErrors(err, #err, __FILE__, __LINE__)

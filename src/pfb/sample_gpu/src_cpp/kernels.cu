@@ -5,7 +5,7 @@
 
 __global__ void reduction(int* signal_d, int n) {
 
-	extern __shared__ int smem[];
+	int* smem = SharedMemory<int>();
 
 	// load shared memory
 	int tidx = threadIdx.x;

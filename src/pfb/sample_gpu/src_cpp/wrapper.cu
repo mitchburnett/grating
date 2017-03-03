@@ -2,19 +2,19 @@
 * The wrapper.cu conatins the implementations of the functions declared in wrapper.h
 */
 
+#include "wrapper.h"
+
 // helper function defintions
-extern "C"
 void __checkCudaErrors(cudaError_t err, const char* const func, const char* file, const int line) {
 	if(err != cudaSuccess) {
-		fprintf(stderr, "ERROR: file <%s> : %d\n", file, line );
-		fprintf(stderr, "%s : %s\n",cudaGetErrorString(err), func);
+		std::cerr << "ERROR: file <" << file << ">" << ":" << line << " ";
+		std::cerr << cudaGetErrorString(err) << " : " << func << std::endl;
 		//cleanUp();
 		//resetDevice();
 		exit(0);
 	}
 }
 
-extern "C"
 void reduce(int* signal_d) {
 
 	dim3 gridSize(1,1,1);

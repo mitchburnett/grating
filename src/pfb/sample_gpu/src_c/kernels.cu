@@ -1,11 +1,16 @@
 /*
 *	Kernels.cu is the implementation of the kernels
 */
+
+#ifdef __cplusplus
+extern "C" {
 #include "kernels.h"
+}
+#endif
 
 __global__ void reduction(int* signal_d, int n) {
 
-	int* smem = SharedMemory<int>();
+	extern __shared__ int smem[];
 
 	// load shared memory
 	int tidx = threadIdx.x;

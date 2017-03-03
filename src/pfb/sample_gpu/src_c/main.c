@@ -28,7 +28,7 @@ int main() {
 
 	checkCudaErrors(cudaMemcpy(signal_h, signal_d, 16*sizeof(int), cudaMemcpyDeviceToHost));
 
-	fprintf(stdout, "%d", signal_h[0]);
+	fprintf(stdout, "%d\n", signal_h[0]);
 
 	free(signal_h);
 	cudaFree(signal_d);

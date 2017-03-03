@@ -1,14 +1,16 @@
 /*
 * The wrapper.cu conatins the implementations of the functions declared in wrapper.h
 */
-
+#ifdef __cplusplus
+extern "C" {
 #include "wrapper.h"
-
+}
+#endif
 // helper function defintions
 void __checkCudaErrors(cudaError_t err, const char* const func, const char* file, const int line) {
 	if(err != cudaSuccess) {
-		std::cerr << "ERROR: file <" << file << ">" << ":" << line << " ";
-		std::cerr << cudaGetErrorString(err) << " : " << func << std::endl;
+		fprintf(stderr, "ERROR: file <%s> : %d\n", file, line );
+		fprintf(stderr, "%s : %s\n",cudaGetErrorString(err), func);
 		//cleanUp();
 		//resetDevice();
 		exit(0);
