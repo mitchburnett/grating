@@ -16,6 +16,7 @@
 #define SCALE_FACTOR  127
 #define F_S		      256.0 // MHz
 #define N			  256  // Time samples
+#define MAX_FREQ      256
 #define CHANNELS	  25    // Freq Channels
 #define NUM_EL		  64    // Antenna Elements
 
@@ -26,6 +27,8 @@ void printUsage(const char* progName) {
     (void) printf("    -s  --samples <value>                ");
     (void) printf("Number of samples in the data\n");
     (void) printf("    -f  --fs <value>                     ");
+    (void) printf("Max freq\n");
+    (void) printf("    -w  --band <value>                   ");
     (void) printf("Sample rate\n");
     (void) printf("    -c  --channels <value>               ");
     (void) printf("Number of channels in data\n");
@@ -40,13 +43,15 @@ int main(int argc, char *argv[]) {
 	int fs = F_S;
 	int coarseChannels = CHANNELS;
 	int elements = NUM_EL;
+	int genFreq = MAX_FREQ;
 
 	/* valid short and long options */
-	const char* const pcOptsShort = ":hs:f:c:e:";
+	const char* const pcOptsShort = ":hs:f:w:c:e:";
 	const struct option stOptsLong[] = {
 		{ "help",		0, NULL,	'h' },
 		{ "samples",	1, NULL,	's' },
 		{ "fs",			1, NULL,	'f' },
+		{ "band",		1, NULL,	'w' },
 		{ "channels",	1, NULL,	'c' },
 		{ "elements",	1, NULL,	'e' },
 		{ NULL,			0, NULL, 	0	}
@@ -95,6 +100,10 @@ int main(int argc, char *argv[]) {
 				fs = (int) atoi(optarg);
 				break;
 
+			case 'w':
+				genFreq = (int) atoi(optarg);
+				break;
+
 			case ':':
 				(void) fprintf(stderr, "-%c option requires a parameter.\n", optopt);
 				errFlag++;
@@ -138,12 +147,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	int i = 0;
-	const int genFreq = 256;
+	//const int genFreq = 256;
     //Generate freq array.
-    float freq[genFreq] = {};
+    float* freq = NULL;
+    freq = (float*) malloc(genFreq*sizeof(float));
+    //float freq[genFreq] = {};
     for(i = 1; i <= genFreq; i++) {
         freq[i-1] = i*1.0;
-        fprintf(stdout, "freq: %f\n", freq[i-1]);
+        //fprintf(stdout, "freq: %f\n", freq[i-1]);
     }
     int f = 0;
 	int n = 0;
