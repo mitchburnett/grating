@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
         freq[i-1] = i*1.0;
         //fprintf(stdout, "freq: %f\n", freq[i-1]);
     }
+    fprintf(stdout, "i: %d\n", i);
     int f = 0;
 	int n = 0;
 	int c = 0;
@@ -169,9 +170,10 @@ int main(int argc, char *argv[]) {
 			"INFO: Generating samples...\n"
 			"\tSamples:\t %d\n"
 			"\tSample rate:\t %d\n"
+			"\tMax Range:\t %d\n"
 			"\tChannels:\t %d\n"
 			"\tElements:\t %d\n",
-			samples, fs, coarseChannels, elements);
+			samples, fs, genFreq, coarseChannels, elements);
 
 	for(f = 0; f < genFreq; f++) {
 		for(n = 0; n < samples; n++) {

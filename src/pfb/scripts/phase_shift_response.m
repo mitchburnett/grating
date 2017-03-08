@@ -56,9 +56,9 @@ for p = 0:files-1
 
     plot(faxis_response(1:ntaps:end), 10*log10(abs(XX(1:ntaps:end,17)).^2));
     xlim([min(faxis_response) max(faxis_response)]);
-    title('PFB Filter Response');
+    title('Measured Freq. Response');
     xlabel('Frequency (MHz)');
-    ylabel('Gain (dB)');
+    ylabel('Magnitude (dB)');
     box on;
     
     response(p+1,:) = (XX(1:ntaps:end, 17));
@@ -67,5 +67,11 @@ end
 R = mean(response);
 
 figure(8);
-plot(faxis_response(1:ntaps:end), 20*log10(abs(R))); grid on;
-xlim([min(faxis_response) max(faxis_response)]);
+%Raxis = linspace(-1, 1-1/256, length(R));
+radAxis = (-1:1/128:1-2/128);
+plot(radAxis, 20*log10(abs(R))); grid on;
+title('Measured Freq. Response');
+xlabel('Normalized Freq (\pi rad/sample)');
+ylabel('Magnitude (dB)');
+
+

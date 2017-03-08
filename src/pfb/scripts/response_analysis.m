@@ -26,12 +26,13 @@ fclose(f);
 figure(1);
 freqz(w);
 
+radAxis = (-1:1/512:1-1/512);
 W = fft(w, 1024);
 W = fftshift(W);
 figure(2); grid on;
 idx = (0:length(W)-1);
-plot(idx, 20*log10(abs(W)/max(abs(W)))); grid on;
-xlim([0, max(idx)]);
+plot(radAxis, 20*log10(abs(W))); grid on;
+
 
 
 
