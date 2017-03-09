@@ -1,19 +1,19 @@
 %clearvars;
 %%
 
-N = 256*256;
+N = 512*512;
 totalCh = 1;
 coarseCh = 1;
 numEl = 1;
 
-fs = 256;
-nfft = 32;
+fs = 512;
+nfft = 64;
 ntaps = 8;
 subbands = coarseCh*numEl; % 5 channels processed * 64 el = 320 subbands
 
 %% Load data
 % measured pfb response
-f = fopen('../bin/output/filter_response_out_s_256_f_256_c_1_e_1.dat', 'r');
+f = fopen('../bin/output/outfile.dat', 'r');
 output = fread(f, 'float32');  
 fclose(f);
 
@@ -31,7 +31,7 @@ W = fft(w, 1024);
 W = fftshift(W);
 figure(2); grid on;
 idx = (0:length(W)-1);
-plot(radAxis, 20*log10(abs(W))); grid on;
+plot(radAxis, 20*log10(abs(W)/abs(max(W)))); grid on;
 
 
 
@@ -101,7 +101,7 @@ figure(4); hold on; grid on;
 
 faxis_response = 0:fs/windows:fs - 1/windows;
 
-plot(faxis_response(1:ntaps:end), 10*log10(abs(XX(1:ntaps:end,17))));
+plot(faxis_response, 20*log10(abs(XX(:,17))));
 xlim([min(faxis_response) max(faxis_response)]);
 title('PFB Filter Response');
 xlabel('Frequency (MHz)');

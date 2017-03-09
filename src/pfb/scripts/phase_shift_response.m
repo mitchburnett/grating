@@ -1,13 +1,13 @@
 clearvars;
 %%
 
-N = 256*256;
+N = 512*512;
 totalCh = 1;
 coarseCh = 1;
 numEl = 1;
 
 fs = 256;
-nfft = 32;
+nfft = 64;
 ntaps = 8;
 subbands = coarseCh*numEl; % 5 channels processed * 64 el = 320 subbands
 
@@ -68,8 +68,8 @@ R = mean(response);
 
 figure(8);
 %Raxis = linspace(-1, 1-1/256, length(R));
-radAxis = (-1:1/128:1-2/128);
-plot(radAxis, 20*log10(abs(R))); grid on;
+radAxis = (-1:1/512:1-2/512);
+plot(radAxis, 20*log10(abs(R)/abs(max(R)))); grid on;
 title('Measured Freq. Response');
 xlabel('Normalized Freq (\pi rad/sample)');
 ylabel('Magnitude (dB)');
