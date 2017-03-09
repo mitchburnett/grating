@@ -1,7 +1,19 @@
 # Git ignore file
 
+#### The following combination will ignore files without an extension ####
+# Ignore all
+*
+# Unignore all with extensions
+!*.*
+# Unignore all dirs
+!*/
+##############################
+
+# compiled src files
+*.o
+
 # MATLAB Autosave
-.m~
+*.m~
 
 # OS generated files
 .DS_Store
@@ -9,3 +21,6 @@
 ._*
 .Spotlight-V100
 .Trashes
+
+# Other
+*.idea/
