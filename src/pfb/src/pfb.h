@@ -11,7 +11,7 @@
 #include <sys/stat.h>	/* for open()  */
 #include <fcntl.h>		/* for open()  */
 #include <unistd.h>		/* for close() */
-#include <errno.h>		/* for errno   */
+#include <errno.h>		/* for errno   */  
 
 #include <float.h>		/* for FLT_MAX */
 

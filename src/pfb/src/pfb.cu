@@ -1,10 +1,5 @@
 #include "pfb.h"
 
-/*
-
-int g_iNumSubBands = DEF_NUM_SUBBANDS;
-*/
-
 int g_IsDataReadDone = FALSE;
 int g_IsProcDone = FALSE;
 //int g_iIsPFBOn = DEF_PFB_ON;
@@ -40,7 +35,6 @@ float2* g_pf2FFTOut_d = NULL;
 
 int g_iNFFT = DEF_LEN_SPEC;
 int g_iNTaps = NUM_TAPS;
-//int g_iNumSubBands = DEF_NUM_CHANNELS * DEF_NUM_ELEMENTS;
 int g_iNumSubBands = PFB_CHANNELS * DEF_NUM_ELEMENTS;
 
 float *g_pfPFBCoeff = NULL;

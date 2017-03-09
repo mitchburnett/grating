@@ -1,4 +1,4 @@
-/*
+ /*
 * The wrapper serves as the handshake between cuda and c/c++. This includes the declarations
 * of the functions that are used to interface and run the cuda kernels.
 *
