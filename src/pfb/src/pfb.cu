@@ -108,10 +108,10 @@ int runPFB(char* inputData_h, float2* outputData_h, params pfbParams) {
 
 			// copy back to host.
 			//wind back out ptr - should put in another pointer as a process read ptr.
-			int outDataSize = countFFT * g_iNumSubBands * g_iNFFT * sizeof(cufftComplex);
+			int outDataSize = countFFT * g_iNumSubBands * g_iNFFT;
 			g_pf2FFTOut_d = g_pf2FFTOut_d - countFFT*g_iNumSubBands*g_iNFFT;
-			fprintf(stdout, "Copyting back: %d\n", outDataSize);
-			CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize, cudaMemcpyDeviceToHost));
+			fprintf(stdout, "Copying back: %d\n", outDataSize);
+			CUDASafeCallWithCleanUp(cudaMemcpy(outputData_h, g_pf2FFTOut_d, outDataSize*sizeof(cufftComplex), cudaMemcpyDeviceToHost));
 		}
 
 	}
@@ -310,7 +310,7 @@ int initPFB(int iCudaDevice, params pfbParams){
 		(void) fprintf(stderr, "ERROR: Failed reading filter coefficients. %s\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
-	
+	l
 	(void) close(g_iFileCoeff);
 
 	/********************************************/
